@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+node_modules/
+panel-private/
+panel-tools/
+*.db
+*.db-shm
+*.db-wal
+*.log
+.env
+.env.*
+!*.example
+verification/
+
