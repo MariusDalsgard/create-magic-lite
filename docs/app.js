@@ -45,7 +45,7 @@ function element(tag, className, text) {
 
 let configuration = { apiBase: '', serverAddress: '83.88.146.132:25566', packShareUrl: null, githubRepoUrl: '' };
 let session = null;
-let available = false;
+let available = null;
 let currentStatus = null;
 let suggestions = [];
 let statusBusy = false;
@@ -162,7 +162,11 @@ function renderStatus(status, problem = '') {
   let button = 'Forbindelse afventer';
   let help = 'Siden er klar. Forbindelsen til Marius\' computer er endnu ikke aktiveret.';
   let enabled = false;
-  if (configuration.apiBase && !available) {
+  if (configuration.apiBase && available === null) {
+    label = 'Henter status';
+    button = 'Kontrollerer forbindelsen …';
+    help = 'Kontakter Marius\' computer. Det tager normalt et øjeblik.';
+  } else if (configuration.apiBase && available === false) {
     label = 'Ingen forbindelse';
     button = 'Kan ikke nå computeren';
     help = problem || 'Marius\' computer og forbindelsen til panelet skal være tændt. Vi prøver automatisk igen.';
@@ -450,7 +454,7 @@ async function refreshConfiguration(force = false) {
   $$('.pack-link-pending, .pack-fallback').forEach(node => { node.hidden = !!configuration.packShareUrl; });
   if (configuration.githubRepoUrl) { $('#github-link').href = configuration.githubRepoUrl; $('#github-link').hidden = false; }
   if (previousBase && previousBase !== configuration.apiBase) {
-    available = false;
+    available = null;
     saveSession(null);
     renderStatus(null);
     showToast('Forbindelsen er blevet opdateret. Log ind igen med vennekoden.');
