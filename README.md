@@ -21,7 +21,7 @@ Dette er en **gratis testforbindelse**, ikke en tunnel med oppetidsgaranti. Adre
 
 ## Lokal opsætning
 
-1. Installér officiel Python, GitHub CLI og cloudflared. Log ind med `gh auth login`; brug Windows' legitimationslager. GitHub-adgang opbevares aldrig i siden eller `runtime.json`.
+1. Installér officiel Python, GitHub CLI og cloudflared. Brug en almindelig Python-installation til panelet: Microsoft Store-udgaven kan isolere GitHub CLI fra Windows' legitimationslager. Log ind med `gh auth login`; brug Windows' legitimationslager. GitHub-adgang opbevares aldrig i siden eller `runtime.json`.
 2. Opret privat tilstand **uden for repositoryet**:
 
    ```powershell

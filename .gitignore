@@ -13,4 +13,3 @@ panel-tools/
 .env.*
 !*.example
 verification/
-
