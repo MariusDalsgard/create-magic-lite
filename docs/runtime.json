@@ -1,7 +1,8 @@
 {
-  "apiBase": "",
+  "apiBase": "https://ranch-college-shakespeare-buildings.trycloudflare.com",
   "serverAddress": "83.88.146.132:25566",
   "packShareUrl": null,
   "githubRepoUrl": "https://github.com/MariusDalsgard/create-magic-lite",
-  "connectionType": "test-tunnel"
+  "connectionType": "test-tunnel",
+  "connectionUpdatedAt": "2026-10-27T21:20:09Z"
 }
