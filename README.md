@@ -60,9 +60,11 @@ CurseForge kan blokere automatisk hentning. I så fald bliver linket stadig gemt
 ```powershell
 python -m unittest discover -s tests -v
 node --check docs/app.js
+node --test tests/test_frontend.cjs
 ```
 
 Testene bruger isolerede midlertidige mapper og mocker serverstart. De må aldrig stoppe den rigtige server.
+Frontendtestene kontrollerer indlæsning, søgning efter ældre forslag, gemt sortering og bevarelse af forslag ved forbindelsesfejl eller forsinkede svar.
 
 ## Mulige næste tilføjelser
 

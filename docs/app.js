@@ -48,6 +48,11 @@ let session = null;
 let available = null;
 let currentStatus = null;
 let suggestions = [];
+let suggestionsLoaded = false;
+let suggestionsLoading = false;
+let suggestionsError = '';
+let suggestionsRequest = 0;
+let initializing = true;
 let statusBusy = false;
 let startBusy = false;
 let runtimeBusy = false;
@@ -56,6 +61,7 @@ let previewSequence = 0;
 let previewTimer;
 let toastTimer;
 const STORAGE_KEY = 'create-magic-friend-session';
+const SORT_KEY = 'create-magic-suggestions-sort';
 const pages = { oversigt: 'Oversigt', modforslag: 'Modforslag', 'kom-i-gang': 'Kom i gang', modpakken: 'Modpakken', nyt: 'Nyt på serveren' };
 
 function showToast(message) {
@@ -67,6 +73,15 @@ function showToast(message) {
 }
 
 function saveSession(value) {
+  if (session?.token !== value?.token) {
+    suggestionsRequest++;
+    suggestions = [];
+    suggestionsLoaded = false;
+    suggestionsLoading = false;
+    suggestionsError = '';
+    $('#submit-suggestion').disabled = false;
+    setFeedback($('#suggestion-feedback'), '');
+  }
   session = value;
   try {
     if (value) sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ...value, apiBase: configuration.apiBase }));
@@ -81,10 +96,7 @@ function renderAccount() {
   $('#account-avatar').textContent = session ? [...session.name][0].toLocaleUpperCase('da-DK') : '?';
   $('#suggestions-login').hidden = !!session;
   $('#suggestion-fields').disabled = !session || !available;
-  if (!session) {
-    suggestions = [];
-    renderSuggestions();
-  }
+  renderSuggestions();
 }
 
 function setFeedback(target, message, error = false) {
@@ -124,18 +136,22 @@ function imageLink(value) {
 
 async function api(path, body, authenticated = true) {
   if (!configuration.apiBase) throw new Error('Forbindelsen til computeren er ikke aktiveret endnu.');
+  const requestBase = configuration.apiBase;
+  const requestToken = session?.token;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 18000);
   const headers = { Accept: 'application/json' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (authenticated && session) headers.Authorization = `Bearer ${session.token}`;
   try {
-    const response = await fetch(configuration.apiBase + path, { method: body === undefined ? 'GET' : 'POST', headers, body: body === undefined ? undefined : JSON.stringify(body), signal: controller.signal, credentials: 'omit', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer' });
+    const response = await fetch(requestBase + path, { method: body === undefined ? 'GET' : 'POST', headers, body: body === undefined ? undefined : JSON.stringify(body), signal: controller.signal, credentials: 'omit', cache: 'no-store', redirect: 'error', referrerPolicy: 'no-referrer' });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       if (response.status === 401 && authenticated) {
-        saveSession(null);
-        renderStatus(null);
+        if (requestToken === session?.token && requestBase === configuration.apiBase) {
+          saveSession(null);
+          renderStatus(null);
+        }
         throw new Error('Din adgang er udløbet. Log ind med vennekoden igen.');
       }
       if (response.status === 429) throw new Error('Lidt for mange forsøg. Vent et øjeblik, og prøv igen.');
@@ -210,12 +226,17 @@ function renderStatus(status, problem = '') {
 
 async function refreshStatus() {
   if (statusBusy || !configuration.apiBase) return;
+  const token = session?.token;
+  const base = configuration.apiBase;
+  const current = () => token === session?.token && base === configuration.apiBase;
   statusBusy = true;
   try {
     const status = await api(session ? '/api/status' : '/health', undefined, !!session);
+    if (!current()) return;
     available = true;
     renderStatus(session ? status : null);
   } catch (error) {
+    if (!current()) return;
     available = false;
     renderStatus(null, error.message);
   } finally { statusBusy = false; }
@@ -245,10 +266,12 @@ $('#login-form').addEventListener('submit', async event => {
   const name = $('#login-name').value.trim();
   const code = $('#login-code').value.trim();
   if (!name || !code) return;
+  const loginBase = configuration.apiBase;
   $('#login-submit').disabled = true;
   setFeedback($('#login-feedback'), 'Logger ind …');
   try {
     const result = await api('/api/login', { name, code }, false);
+    if (configuration.apiBase !== loginBase) throw new Error('Forbindelsen er blevet opdateret. Log ind igen.');
     if (typeof result.token !== 'string' || !result.token) throw new Error('Login gav ikke en gyldig adgang. Prøv igen.');
     available = true;
     saveSession({ token: result.token, name: typeof result.name === 'string' ? result.name : name, expires_at: result.expires_at });
@@ -330,18 +353,40 @@ $('#suggestion-form').addEventListener('submit', async event => {
     return;
   }
   const reason = $('#mod-reason').value.trim();
+  const submittedToken = session.token;
+  const submittedBase = configuration.apiBase;
   $('#submit-suggestion').disabled = true;
   setFeedback($('#suggestion-feedback'), 'Sender dit forslag …');
   try {
     const result = await api('/api/suggestions', { url, reason });
-    setFeedback($('#suggestion-feedback'), result.duplicate ? 'Den mod er allerede foreslået. Find den nedenfor, og giv den din stemme.' : 'Dit forslag er sendt. Tak for idéen!');
+    if (session?.token !== submittedToken || configuration.apiBase !== submittedBase) return;
+    if (!result.suggestion?.id || !modLink(result.suggestion.url)) throw new Error('Gemningen kunne ikke bekræftes. Prøv at opdatere listen.');
+    // A confirmed save remains visible even if the following list request fails.
+    suggestionsRequest++;
+    suggestionsLoading = false;
+    suggestionsError = '';
+    suggestions = [...suggestions.filter(item => String(item.id) !== String(result.suggestion.id)), result.suggestion];
+    $('#suggestions-search').value = '';
+    if (!result.duplicate) {
+      $('#suggestions-sort').value = 'newest';
+      rememberSuggestionSort();
+    }
+    renderSuggestions();
+    setFeedback($('#suggestion-feedback'), result.duplicate ? 'Forslaget er allerede gemt. Det er markeret i listen nedenfor.' : 'Dit forslag er gemt. Det bliver også her næste gang, du besøger siden.');
     $('#suggestion-form').reset();
     previewSequence++;
     clearTimeout(previewTimer);
     renderPreview(null);
     await loadSuggestions();
-  } catch (error) { setFeedback($('#suggestion-feedback'), error.message, true); }
-  finally { $('#submit-suggestion').disabled = false; }
+    if (session?.token !== submittedToken || configuration.apiBase !== submittedBase) return;
+    const savedCard = document.getElementById(`suggestion-${result.suggestion.id}`);
+    savedCard?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    savedCard?.focus({ preventScroll: true });
+  } catch (error) {
+    if (session?.token === submittedToken && configuration.apiBase === submittedBase) setFeedback($('#suggestion-feedback'), error.message, true);
+  } finally {
+    if (session?.token === submittedToken && configuration.apiBase === submittedBase) $('#submit-suggestion').disabled = false;
+  }
 });
 
 function emptySuggestions(title, message) {
@@ -351,13 +396,31 @@ function emptySuggestions(title, message) {
 }
 
 function renderSuggestions() {
-  $('#suggestions-count').textContent = String(suggestions.length);
+  $('#suggestions-count').textContent = session && (suggestionsLoaded || suggestions.length) ? String(suggestions.length) : '—';
+  $('#suggestions-list').setAttribute('aria-busy', String(suggestionsLoading || initializing));
+  $('#suggestions-refresh').disabled = !session || suggestionsLoading || initializing;
+  $('#suggestions-search').disabled = !session;
+  $('#suggestions-summary').textContent = '';
+  setFeedback($('#suggestions-status'), suggestionsError ? `${suggestionsError} ${suggestions.length ? 'Viser de senest hentede forslag. Brug Opdater liste for at prøve igen.' : 'Brug Opdater liste for at prøve igen.'}` : suggestionsLoading && suggestions.length ? 'Opdaterer listen …' : '', !!suggestionsError);
+  if (initializing) { emptySuggestions('Henter dine forslag …', 'Kontrollerer forbindelsen og din adgang.'); return; }
   if (!session) { emptySuggestions('Her får nye idéer plads', 'Log ind for at se fællesskabets forslag.'); return; }
+  if (!suggestionsLoaded && !suggestions.length) {
+    emptySuggestions(suggestionsError ? 'Forslagene kunne ikke hentes' : 'Henter forslag …', suggestionsError ? 'Listen er ikke indlæst. Prøv igen med Opdater liste.' : 'Henter den gemte liste fra serveren.');
+    return;
+  }
   if (!suggestions.length) { emptySuggestions('Det første forslag kan være dit', 'Indsæt et modlink ovenfor. En begrundelse er helt valgfri.'); return; }
-  const sorted = [...suggestions].sort((a, b) => $('#suggestions-sort').value === 'votes' ? Number(b.votes || 0) - Number(a.votes || 0) || Date.parse(b.created_at) - Date.parse(a.created_at) : Date.parse(b.created_at) - Date.parse(a.created_at));
+  const query = $('#suggestions-search').value.trim().toLocaleLowerCase('da-DK');
+  const matching = suggestions.filter(item => !query || [item.title, item.url, item.description, item.reason, item.author].some(value => String(value || '').toLocaleLowerCase('da-DK').includes(query)));
+  $('#suggestions-summary').textContent = query ? `Viser ${matching.length} af ${suggestions.length} forslag.` : `${suggestions.length} gemte forslag. Søg på navn eller link for at finde et tidligere forslag.`;
+  if (!matching.length) { emptySuggestions('Ingen forslag matcher søgningen', 'Prøv et andet ord, eller ryd søgefeltet for at se alle forslag.'); return; }
+  const newest = (a, b) => (Date.parse(b.created_at) || 0) - (Date.parse(a.created_at) || 0) || Number(b.id) - Number(a.id);
+  const order = $('#suggestions-sort').value;
+  const sorted = matching.sort((a, b) => order === 'votes' ? Number(b.votes || 0) - Number(a.votes || 0) || newest(a, b) : order === 'oldest' ? newest(b, a) : newest(a, b));
   const fragment = document.createDocumentFragment();
   sorted.forEach(suggestion => {
     const card = element('article', 'card suggestion-card');
+    card.id = `suggestion-${suggestion.id}`;
+    card.tabIndex = -1;
     const header = element('div', 'suggestion-card-header');
     const heading = element('div');
     const title = element('h3');
@@ -379,12 +442,19 @@ function renderSuggestions() {
     vote.setAttribute('aria-label', `${suggestion.voted ? 'Fjern din stemme fra' : 'Stem på'} ${suggestion.title || 'modforslaget'}. ${Number(suggestion.votes) || 0} stemmer.`);
     vote.append(makeIcon('chevron-up'), document.createTextNode(String(Number(suggestion.votes) || 0)));
     vote.addEventListener('click', async () => {
+      const token = session?.token;
+      const base = configuration.apiBase;
+      const current = () => token === session?.token && base === configuration.apiBase;
       vote.disabled = true;
       try {
         const result = await api(`/api/suggestions/${encodeURIComponent(suggestion.id)}/vote`, {});
+        if (!current()) return;
+        suggestionsRequest++;
+        suggestionsLoading = false;
+        suggestionsError = '';
         suggestions = suggestions.map(item => String(item.id) === String(suggestion.id) ? result.suggestion : item);
         renderSuggestions();
-      } catch (error) { showToast(error.message); vote.disabled = false; }
+      } catch (error) { if (current()) { showToast(error.message); vote.disabled = false; } }
     });
     footer.append(vote); card.append(footer); fragment.append(card);
   });
@@ -393,13 +463,31 @@ function renderSuggestions() {
 
 async function loadSuggestions() {
   if (!session || !configuration.apiBase) { renderSuggestions(); return; }
+  const request = ++suggestionsRequest;
+  const token = session.token;
+  const base = configuration.apiBase;
+  const current = () => request === suggestionsRequest && token === session?.token && base === configuration.apiBase;
+  suggestionsLoading = true;
+  suggestionsError = '';
+  renderSuggestions();
   try {
     const result = await api('/api/suggestions');
-    suggestions = Array.isArray(result.suggestions) ? result.suggestions : [];
-    renderSuggestions();
-  } catch (error) { emptySuggestions('Forslagene kunne ikke hentes', error.message); }
+    if (!current()) return;
+    if (!Array.isArray(result.suggestions)) throw new Error('Serveren sendte ikke en gyldig liste med forslag.');
+    suggestions = result.suggestions;
+    suggestionsLoaded = true;
+  } catch (error) {
+    if (current()) suggestionsError = error.message;
+  } finally {
+    if (current()) { suggestionsLoading = false; renderSuggestions(); }
+  }
 }
-$('#suggestions-sort').addEventListener('change', renderSuggestions);
+function rememberSuggestionSort() {
+  try { localStorage.setItem(SORT_KEY, $('#suggestions-sort').value); } catch { /* Sorting still works without storage. */ }
+}
+$('#suggestions-sort').addEventListener('change', () => { rememberSuggestionSort(); renderSuggestions(); });
+$('#suggestions-search').addEventListener('input', renderSuggestions);
+$('#suggestions-refresh').addEventListener('click', loadSuggestions);
 
 $$('.copy-address').forEach(button => button.addEventListener('click', async () => {
   try {
@@ -427,7 +515,12 @@ function route(focus = false) {
   if (page === 'modforslag') loadSuggestions();
 }
 window.addEventListener('hashchange', () => route(true));
-document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshStatus(); });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    refreshStatus();
+    if (location.hash === '#modforslag') loadSuggestions();
+  }
+});
 
 async function refreshConfiguration(force = false) {
   if (runtimeBusy || (!force && Date.now() - runtimeLastChecked < 12000)) return false;
@@ -463,16 +556,20 @@ async function refreshConfiguration(force = false) {
 }
 
 async function initialize() {
+  try {
+    const sort = localStorage.getItem(SORT_KEY);
+    if (['newest', 'oldest', 'votes'].includes(sort)) $('#suggestions-sort').value = sort;
+  } catch { /* Default sorting works when storage is unavailable. */ }
   route();
   await refreshConfiguration(true);
   try {
     const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
     if (saved && saved.apiBase === configuration.apiBase && typeof saved.token === 'string' && typeof saved.name === 'string') session = { token: saved.token, name: saved.name, expires_at: saved.expires_at };
   } catch { /* Ignore malformed or unavailable session storage. */ }
+  initializing = false;
   renderAccount();
   renderStatus(null);
-  await refreshStatus();
-  if (location.hash === '#modforslag') await loadSuggestions();
+  await Promise.allSettled([refreshStatus(), ...(location.hash === '#modforslag' ? [loadSuggestions()] : [])]);
   setInterval(() => { if (!document.hidden) refreshStatus(); }, 15000);
   setInterval(async () => {
     if (!document.hidden && await refreshConfiguration()) await refreshStatus();
