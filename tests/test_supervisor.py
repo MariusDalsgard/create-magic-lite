@@ -53,9 +53,11 @@ class PublicationTests(unittest.TestCase):
         self.folder = tempfile.TemporaryDirectory()
         self.root = Path(self.folder.name)
         (self.root / "docs").mkdir()
+        (self.root / "gh-config").mkdir()
         self.root_patch = patch.object(supervisor, "ROOT", self.root)
         self.root_patch.start()
-        self.settings = {"github_repo": "MariusDalsgard/create-magic-lite", "gh_path": "gh.exe"}
+        self.settings = {"github_repo": "MariusDalsgard/create-magic-lite", "gh_path": "gh.exe",
+                         "gh_config_dir": str(self.root / "gh-config")}
         self.url = "https://green-small-fox.trycloudflare.com"
 
     def tearDown(self):
@@ -143,6 +145,68 @@ class PublicationTests(unittest.TestCase):
         self.assertNotIn("GH_TRACE", run.call_args.kwargs["env"])
         self.assertIn("github.com", run.call_args.args[0])
         self.assertFalse(run.call_args.kwargs["shell"])
+
+    def test_durable_profile_overrides_launch_environment_without_changing_parent(self):
+        injected = {"GH_CONFIG_DIR": "wrong-profile", "XDG_CONFIG_HOME": "wrong-xdg",
+                    "GH_TOKEN": "temporary-secret", "GITHUB_TOKEN": "temporary-secret",
+                    "GH_ENTERPRISE_TOKEN": "temporary-secret", "GITHUB_ENTERPRISE_TOKEN": "temporary-secret",
+                    "GH_HOST": "different-host.example", "GH_DEBUG": "api", "GH_TRACE": "1", "DEBUG": "1"}
+        result = Mock(returncode=0, stdout="{}", stderr="")
+        with patch.dict(os.environ, injected), patch.object(supervisor.subprocess, "run", return_value=result) as run:
+            self.assertEqual(supervisor.github(self.settings, "GET", "user"), {})
+            self.assertEqual(os.environ["GH_CONFIG_DIR"], "wrong-profile")
+            self.assertEqual(os.environ["GH_TOKEN"], "temporary-secret")
+        environment = run.call_args.kwargs["env"]
+        self.assertEqual(environment["GH_CONFIG_DIR"], str((self.root / "gh-config").resolve()))
+        self.assertEqual(environment["GH_PROMPT_DISABLED"], "1")
+        for name in injected.keys() - {"GH_CONFIG_DIR", "XDG_CONFIG_HOME"}:
+            self.assertNotIn(name, environment)
+        self.assertNotIn("temporary-secret", json.dumps(environment))
+
+    def test_missing_relative_and_nonexistent_profiles_fail_before_cli(self):
+        cases = [(None, "config_missing"), ("", "config_missing"),
+                 ("relative-profile", "config_invalid"),
+                 (str(self.root / "missing-profile"), "config_missing")]
+        with patch.object(supervisor.subprocess, "run") as run:
+            for directory, category in cases:
+                settings = dict(self.settings, gh_config_dir=directory)
+                with self.subTest(directory=directory), self.assertRaises(supervisor.GitHubError) as error:
+                    supervisor.github(settings, "GET", "user")
+                self.assertEqual(error.exception.category, category)
+            run.assert_not_called()
+
+    def test_cli_auth_exit_and_timeout_are_safe_diagnostics(self):
+        result = Mock(returncode=4, stdout="", stderr="authentication required temporary-secret")
+        with patch.object(supervisor.subprocess, "run", return_value=result), self.assertRaises(supervisor.GitHubError) as error:
+            supervisor.github(self.settings, "GET", "user")
+        self.assertEqual(error.exception.category, "authentication")
+        self.assertEqual(error.exception.returncode, 4)
+        self.assertNotIn("temporary-secret", str(error.exception))
+        timeout = subprocess.TimeoutExpired(["gh.exe"], 40, output="temporary-secret")
+        with patch.object(supervisor.subprocess, "run", side_effect=timeout), self.assertRaises(supervisor.GitHubError) as error:
+            supervisor.github(self.settings, "GET", "user")
+        self.assertEqual(error.exception.category, "timeout")
+        self.assertNotIn("temporary-secret", str(error.exception))
+
+    def test_private_publication_status_retains_safe_error_then_clears_on_success(self):
+        state = {"published": False, "api_base": self.url}
+        with patch.object(supervisor, "publish_endpoint", side_effect=supervisor.GitHubError(403, 1)), self.assertLogs(level="WARNING") as logs:
+            self.assertFalse(supervisor.publish_with_status(self.root, state, self.settings, self.url))
+        saved = json.loads((self.root / "supervisor-status.json").read_text())
+        self.assertFalse(saved["published"])
+        self.assertIn("last_publish_attempt", saved)
+        self.assertEqual(saved["last_publish_error"], {"category": "permission_or_rate_limit", "http_status": 403, "returncode": 1})
+        self.assertIn("HTTP=403", "\n".join(logs.output))
+        with patch.object(supervisor, "publish_endpoint", side_effect=RuntimeError("temporary-secret")), self.assertLogs(level="WARNING") as logs:
+            self.assertFalse(supervisor.publish_with_status(self.root, state, self.settings, self.url))
+        self.assertNotIn("temporary-secret", (self.root / "supervisor-status.json").read_text())
+        self.assertNotIn("temporary-secret", "\n".join(logs.output))
+        with patch.object(supervisor, "publish_endpoint"):
+            self.assertTrue(supervisor.publish_with_status(self.root, state, self.settings, self.url))
+        saved = json.loads((self.root / "supervisor-status.json").read_text())
+        self.assertTrue(saved["published"])
+        self.assertIn("last_publish_success", saved)
+        self.assertNotIn("last_publish_error", saved)
 
 
 class LifecycleTests(unittest.TestCase):

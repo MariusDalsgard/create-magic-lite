@@ -24,10 +24,20 @@ NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 
 class GitHubError(RuntimeError):
-    def __init__(self, status=None):
-        self.status = status
+    def __init__(self, status=None, returncode=None, category=None):
+        self.status = status if isinstance(status, int) else None
+        self.returncode = returncode if isinstance(returncode, int) else None
+        self.category = category or (
+            "authentication" if self.status == 401 or self.returncode == 4 else
+            "permission_or_rate_limit" if self.status == 403 else
+            "not_found" if self.status == 404 else
+            "conflict" if self.status == 409 else
+            "rate_limit" if self.status == 429 else
+            "github_unavailable" if self.status is not None and self.status >= 500 else
+            "http_error" if self.status is not None else "cli_error")
         # Never include gh stderr: debug output can contain authentication data.
-        super().__init__("GitHub request failed" + (f" (HTTP {status})" if status else ""))
+        super().__init__("GitHub request failed: " + self.category +
+                         (f" (HTTP {self.status})" if self.status else ""))
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -46,20 +56,50 @@ def healthy(url):
         return False
 
 
+def github_environment(settings):
+    """Use one durable local profile, independent of the launching application's env."""
+    configured = settings.get("gh_config_dir")
+    if not isinstance(configured, str) or not configured.strip():
+        raise GitHubError(category="config_missing")
+    try:
+        directory = Path(configured)
+        if not directory.is_absolute():
+            raise GitHubError(category="config_invalid")
+        if not directory.is_dir():
+            raise GitHubError(category="config_missing")
+        directory = directory.resolve(strict=True)
+    except (OSError, ValueError):
+        raise GitHubError(category="config_invalid") from None
+    environment = os.environ.copy()
+    for name in ("GH_DEBUG", "GH_TRACE", "DEBUG", "GH_TOKEN", "GITHUB_TOKEN",
+                 "GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN", "GH_HOST"):
+        environment.pop(name, None)
+    environment["GH_CONFIG_DIR"] = str(directory)
+    environment["GH_PROMPT_DISABLED"] = "1"
+    environment["GH_NO_UPDATE_NOTIFIER"] = "1"
+    return environment
+
+
 def github(settings, method, endpoint, data=None):
+    environment = github_environment(settings)
     command = [settings["gh_path"], "api", "--hostname", "github.com", "--method", method, endpoint]
     if data is not None:
         command += ["--input", "-"]
-    environment = os.environ.copy()
-    environment.pop("GH_DEBUG", None)
-    environment.pop("GH_TRACE", None)
-    result = subprocess.run(command, input=None if data is None else json.dumps(data),
-                            text=True, encoding="utf-8", capture_output=True, timeout=40,
-                            creationflags=NO_WINDOW, env=environment, shell=False)
+    try:
+        result = subprocess.run(command, input=None if data is None else json.dumps(data),
+                                text=True, encoding="utf-8", capture_output=True, timeout=40,
+                                creationflags=NO_WINDOW, env=environment, shell=False)
+    except subprocess.TimeoutExpired:
+        raise GitHubError(category="timeout") from None
+    except OSError:
+        raise GitHubError(category="cli_launch_failed") from None
     if result.returncode:
         status = re.search(r"\bHTTP\s+(\d{3})\b", result.stderr)
-        raise GitHubError(int(status.group(1)) if status else None)
-    return json.loads(result.stdout) if result.stdout.strip() else None
+        raise GitHubError(int(status.group(1)) if status else None, result.returncode)
+    try:
+        return json.loads(result.stdout) if result.stdout.strip() else None
+    except ValueError:
+        raise GitHubError(category="invalid_response") from None
 
 
 def write_local_runtime(public):
@@ -229,6 +269,29 @@ def write_status(private, state):
     temporary.replace(path)
 
 
+def publish_with_status(private, state, settings, endpoint):
+    state["last_publish_attempt"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    state["published"] = False
+    state.pop("last_publish_error", None)
+    write_status(private, state)
+    try:
+        publish_endpoint(settings, endpoint)
+    except Exception as error:
+        diagnostic = {"category": "unexpected_error", "http_status": None, "returncode": None}
+        if isinstance(error, GitHubError):
+            diagnostic.update(category=error.category, http_status=error.status, returncode=error.returncode)
+        state["last_publish_error"] = diagnostic
+        write_status(private, state)
+        logging.warning("Publication pending: category=%s HTTP=%s exit=%s",
+                        diagnostic["category"], diagnostic["http_status"], diagnostic["returncode"])
+        return False
+    state["published"] = True
+    state["last_publish_success"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    write_status(private, state)
+    logging.info("Healthy test connection published: %s", endpoint)
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--private-dir", type=Path, required=True)
@@ -321,15 +384,8 @@ def main():
                 backoff = 3
             current_tunnel = guard.current_tunnel()
             if not published and guard.backend.poll() is None and current_tunnel is not None and current_tunnel.poll() is None:
-                try:
-                    publish_endpoint(settings, endpoint)
-                    published = True
-                    state["published"] = True
-                    write_status(private, state)
-                    logging.info("Healthy test connection published: %s", endpoint)
-                except Exception as error:
-                    # Only exception type is logged; never arbitrary CLI output or credentials.
-                    logging.warning("Publication pending (%s)", type(error).__name__)
+                published = publish_with_status(private, state, settings, endpoint)
+                if not published:
                     time.sleep(25)
             time.sleep(5)
     except KeyboardInterrupt:

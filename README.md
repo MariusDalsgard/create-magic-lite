@@ -21,7 +21,7 @@ Dette er en **gratis testforbindelse**, ikke en tunnel med oppetidsgaranti. Adre
 
 ## Lokal opsætning
 
-1. Installér officiel Python, GitHub CLI og cloudflared. Brug en almindelig Python-installation til panelet: Microsoft Store-udgaven kan isolere GitHub CLI fra Windows' legitimationslager. Log ind med `gh auth login`; brug Windows' legitimationslager. GitHub-adgang opbevares aldrig i siden eller `runtime.json`.
+1. Installér officiel Python, GitHub CLI og cloudflared. Brug en almindelig Python-installation til panelet. GitHub CLI skal have en fast konfigurationsmappe uden for AppData: Windows-apps kan ellers bruge en anden mappe end programmer startet ved Windows-login. GitHub-adgang opbevares aldrig i siden eller `runtime.json`.
 2. Opret privat tilstand **uden for repositoryet**:
 
    ```powershell
@@ -29,18 +29,21 @@ Dette er en **gratis testforbindelse**, ikke en tunnel med oppetidsgaranti. Adre
    ```
 
 3. Privatmappen får `config.json`, `friend-access-code.txt` og senere databasen `panel.sqlite3`. Del kun koden privat med vennerne. Begræns mappens Windows-rettigheder til ejeren og SYSTEM. Tilføj eventuelt `http://127.0.0.1:8765` som origin til en lokal forhåndsvisning.
-4. Opret `supervisor.json` i privatmappen med absolutte lokale stier:
+4. Opret mappen `C:\MinecraftPanelPrivate\gh-config`, sæt `$env:GH_CONFIG_DIR='C:\MinecraftPanelPrivate\gh-config'`, og log ind med `gh auth login` i samme PowerShell-vindue. Brug Windows' legitimationslager; læg aldrig et token i hjemmesiden. Opret derefter `supervisor.json` i privatmappen med absolutte lokale stier:
 
    ```json
    {
      "python_path": "C:\\Python311\\python.exe",
      "gh_path": "C:\\Tools\\gh.exe",
+     "gh_config_dir": "C:\\MinecraftPanelPrivate\\gh-config",
      "cloudflared_path": "C:\\Tools\\cloudflared.exe",
      "github_repo": "DITNAVN/create-magic-lite"
    }
    ```
 
 5. Kør `Start-Panel.ps1 -PrivateDirectory C:\MinecraftPanelPrivate`. En genvej i Windows' Start-mappe kan starte panelet ved login. Det starter ikke Minecraft før en startanmodning.
+
+Ved fejl viser `panel-private/supervisor-status.json` seneste udgivelsesforsøg og en fejlkategori uden legitimationsdata. Hvis GitHub-login skal gentages, skal den samme `GH_CONFIG_DIR` bruges. Genstart panelets baggrundsprogram efter ændringer i `supervisor.json`.
 
 Servermappen skal have den faste `Start-Server.ps1` og `server-status.json` fra den lokale servercontroller. Startscriptet må selv håndtere dubletter og normal serveropstart. Se `agent/README.md` for API-kontrakt og detaljer.
 
