@@ -8,6 +8,7 @@ Et lille dansk samlingssted for vennernes Minecraft-server. Hjemmesiden ligger p
 - Foreslå mods med et Modrinth- eller CurseForge-link. Begrundelse er valgfri.
 - Se automatisk hentet titel/billede, når udbyderen tillader det, og stemme på forslag.
 - Læse installationsguide, modpakkeoversigt og ændringer.
+- Hente modpakken direkte som en CurseForge-importfil, søge i dens komplette modliste og se tilføjede, opdaterede og fjernede mods for hver udgave.
 
 Der findes ingen fjernkommando til stop, genstart, konsol, filer eller installation af mods. Et forslag installerer aldrig automatisk et mod. Stop foregår fortsat med ejerens lokale `Stop-Server.ps1`.
 
@@ -55,7 +56,25 @@ Dette er fælles adgang for en lille vennegruppe: navnene er selvvalgte, ikke ve
 
 CurseForge kan blokere automatisk hentning. I så fald bliver linket stadig gemt med et pladsholderbillede. Modrinth-forhåndsvisningen hentes fra det officielle projekt-API. Feltet `packShareUrl` i `docs/runtime.json` på GitHub kan pege på enten et midlertidigt `/minecraft/share/`-link eller en fast `/minecraft/modpacks/<slug>`-side. Når pakken er udgivet, bruges den faste side til alle nye versioner. Venner installerer projektet én gang og vælger derefter opdateringer i CurseForge-appen; en gammel profil fra en delingskode kan kræve denne første installation. Supervisoren læser den aktuelle fil fra GitHub og bevarer modpakkelinket, når tunneladressen opdateres.
 
-Mens et nyt CurseForge-projekt afventer godkendelse, kan dets faste URL gemmes med `packApprovalPending: true` i samme fil. Siden viser da en besked om godkendelsen og skjuler downloadknapperne. Sæt feltet til `false` (eller fjern det), når projektet og en downloadbar udgave faktisk er offentligt tilgængelige. Dette ændrer ikke adgangen til serverstart eller modforslag.
+Mens et nyt CurseForge-projekt afventer godkendelse, kan dets faste URL gemmes med `packApprovalPending: true` i samme fil. Siden viser da en besked om godkendelsen. Den direkte ZIP-download fra hjemmesiden er stadig tilgængelig. Sæt feltet til `false` (eller fjern det), når projektet og en downloadbar udgave faktisk er offentligt tilgængelige.
+
+## Modpakke, database og opdateringer
+
+Den faktiske CurseForge-importfil ligger i `docs/downloads/`. ZIP-filen indeholder modreferencer og gennemgåede indstillinger; CurseForge henter selv de tilhørende mods ved import. Den lille filstørrelse er derfor forventet. Modpakken, modlisten og historikken kan hentes, selv når servercomputeren er slukket.
+
+Udgaver og deres komplette modinventar gemmes i egne tabeller i den eksisterende private `panel.sqlite3`. Hver udgivelse sammenlignes automatisk med den foregående og registrerer tilføjede, opdaterede og fjernede filer. Første udgave sammenlignes med den dokumenterede profil fra før opdateringen: 25 nye mods, 58 mods i alt samt 2 ressourcepakker og 1 shader. Dette tidligere inventar er et sammenligningsgrundlag, ikke en tidligere offentlig udgave. Forslag og stemmer bevares.
+
+`docs/releases.json` er en offentlig eksport fra databasen og indeholder kun udgivelser og offentlige modoplysninger. Hjemmesiden læser denne eksport uden login. Databasen, navne på venner, stemmer og private profiler lægges ikke på GitHub. SQLite-backup tages før første katalogmigration. Versionsnumre kan ikke overskrives med andet indhold.
+
+Når en ny, afprøvet udgave er eksporteret og renset for private filer, kan ejeren forberede hjemmesidens opdatering med:
+
+```powershell
+.\Update-Modpack.ps1 -Archive 'C:\ModpackReleases\Create-Magic-Lite-1.1.0.zip' -Summary 'Nye bygninger og udstyr.'
+```
+
+Kommandoen kontrollerer eksporten mod den lokale CurseForge-profil, gemmer udgaven i databasen og genererer ZIP-download og ændringshistorik. Derefter committes og pushes de ændrede `docs/releases.json` og `docs/downloads/`-filer til GitHub, som udgiver siden. Samme udgave kan genkøres sikkert, hvis udgivelsen blev afbrudt. Den almindelige venneadgang giver ikke adgang til at ændre modpakken eller databasen.
+
+Venner henter ZIP-filen og importerer den i CurseForge. En profil importeret fra ZIP skal også opdateres manuelt med næste ZIP. Når CurseForge-projektet er godkendt, kan venner installere pakken fra den faste projektside for at få fremtidige versioner via CurseForges opdateringsfunktion.
 
 ## Kontrol
 

@@ -60,3 +60,31 @@ python -m unittest discover -s tests -p test_agent.py -v
 ```
 
 Testene bruger midlertidige private mapper og en lokal HTTP-testserver. Minecraft-start og metadatahentning er erstattet af teststubs. De kontrollerer adgang, CORS, URL- og billedbegrænsninger, fravær af stop/genstart, argumentafvisning, parallel start, vedvarende startpause, dubletter og stemmer.
+
+## Offentligt modkatalog og udgivelser
+
+`pack_catalog.py` gemmer modpack-udgivelser i egne `pack_catalog_meta`- og `pack_catalog_releases`-tabeller i den samme private `panel.sqlite3`. Forslag, stemmer og agentens øvrige tabeller ændres ikke. Før den første migration oprettes en konsistent SQLite-sikkerhedskopi i `pack-catalog-backups/` under den private mappe. Denne mappe og databasen skal fortsat holdes uden for Git-repositoryet.
+
+En lokal kommando importerer en gennemgået CurseForge-ZIP og en offentlig metadata-liste:
+
+```powershell
+python -B scripts/publish_pack.py --private-dir "C:\Users\Marius\MinecraftServers\Create-Magic-Lite\panel-private" --archive "C:\udgivelser\Create-Magic-Lite-1.0.0.zip" --metadata "C:\udgivelser\metadata.json" --baseline "C:\udgivelser\foer-opdatering.json" --summary "Nye dyr, bygninger og udstyr."
+```
+
+`--baseline` er valgfri og bruges kun ved den første reelle udgivelse. Den beskriver pakken før opdateringen og bliver ikke til en opdigtet udgivelse. Senere udgaver sammenlignes med den senest importerede udgave. Brug `--docs-dir` til en anden offentlig outputmappe end repositoryets `docs/`.
+
+Metadata og baseline er JSON-lister med `project_id`, `file_id`, `name`, `version`, `kind` og `url`. `kind` er `mod`, `resourcepack` eller `shader`. `image_url` er valgfrit og kan være `null`; `environment` er valgfrit og kan være `client`, `server`, `client-and-server` eller `unknown`. Kun disse offentlige felter accepteres. Projektlinks skal være HTTPS-links til den tilsvarende kategori på CurseForge eller Modrinth, og billeder skal være på ForgeCDN eller Modrinths CDN.
+
+Importen kontrollerer, at manifestets filreferencer præcis matcher metadata. Rå JAR-filer, private mapper, symlinks, dubletter og usikre ZIP-stier afvises. De tilladte ekstra filer er `modlist.html`, `overrides/README.txt`, de tre configs `DistantHorizons.toml`, `alexscaves-client.toml`, `oculus.properties` og MakeUp-UltraFasts versionsbestemte `.zip.txt`-shaderindstillinger. Flere overrides kræver en bevidst ændring af allowlisten.
+
+Versionsnummeret kommer fra `manifest.version`; Minecraft-version og Forge-loader kommer også fra manifestet. Hver udgave gemmer hele listen samt `added`, `updated` og `removed`; opdaterede elementer har `previous_version`. Ændringer i billeder eller miljøangivelser alene tælles ikke som en modopdatering. En eksisterende udgave er uforanderlig: samme ZIP og metadata er en idempotent genimport med det oprindelige tidspunkt, mens ændrede bytes, metadata eller en angivet ny beskrivelse afvises.
+
+Kommandoen kopierer ZIP'en til `docs/downloads/Create-Magic-Lite-<version>.zip` og udskifter `docs/releases.json` atomisk. Snapshotformatet er `{schema_version:1, latest_version, releases:[...]}`, nyeste import først. Hver udgave indeholder `version`, `published_at` i UTC, `minecraft_version`, `loader` såsom `forge-47.4.28`, `download_url`, `sha256`, de tre kategoritællinger, `summary`, `changes` og `items`. Snapshot og downloads kan offentliggøres på GitHub Pages og fungerer, når servercomputeren er slukket; der kræves hverken login, en ny API eller en genstart af agenten. Kommandoen uploader eller committer ikke automatisk.
+
+Hvis en eksport fejler efter databasecommit, kan den samme import køres igen for at genskabe snapshot og download uden en dubletudgivelse. Fejloverskrifter viser ikke databaseindhold eller private filer.
+
+```powershell
+python -B -m unittest discover -s tests -p test_pack_catalog.py -v
+```
+
+Disse tests bruger udelukkende midlertidige databaser, ZIP-filer og dokumentmapper. De ændrer ikke den faktiske server, modpack eller produktionsdatabase.

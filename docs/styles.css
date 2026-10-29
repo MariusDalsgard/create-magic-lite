@@ -2,3 +2,49 @@
 /* Keep decorative art and the mobile scroller inside the viewport. */
 .hero{overflow:hidden}.navigation{max-width:100%}.page,.hero-content,.suggestion-card,.suggestion-card-header,.card-heading{min-width:0}@media(max-width:680px){.hero{overflow:hidden}.world-art{right:-10px}.navigation{overscroll-behavior-x:contain}}
 .suggestions-tools{display:flex;align-items:flex-end;gap:14px;margin-bottom:12px}.suggestions-search-field{flex:1;min-width:0}.suggestions-tools .button{flex-shrink:0;min-height:42px}.suggestions-grid{margin-top:16px}.suggestion-card:focus{outline:2px solid var(--green);outline-offset:4px}#suggestions-status{margin-bottom:16px}@media(max-width:480px){.suggestions-tools{flex-wrap:wrap}.suggestions-search-field{flex-basis:100%}.suggestions-tools .button{width:100%}}
+
+/* Public releases remain available independently of the Minecraft server. */
+.overview-download{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:24px}
+.pack-download-copy{min-width:0;flex:1}
+.pack-download-copy .pack-approval-pending,.pack-download-copy .pack-link-pending{max-width:340px;color:var(--muted);font-size:11px;margin-top:10px}
+.pack-download-actions{display:flex;flex-direction:column;align-items:flex-start;gap:12px;margin-left:auto;max-width:100%}
+.pack-download-actions .button{max-width:100%;text-align:center}
+.guide-download-actions{display:flex;flex-direction:column;align-items:flex-start;gap:15px;margin:18px 0}
+.release-status-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px}
+.release-status-row .inline-feedback{margin:0;font-size:11px}
+.release-status-row .button{flex-shrink:0}
+.release-integrity{margin-top:12px;color:var(--muted);font-size:11px}
+.release-integrity summary{cursor:pointer;width:fit-content}
+.release-integrity code{display:block;overflow-wrap:anywhere;margin-top:8px;font-size:10px}
+.catalog-section{margin-top:36px;padding-top:4px;border-top:1px solid var(--line)}
+.catalog-section .section-heading{margin:22px 0}
+.catalog-search-field{max-width:620px}
+.catalog-search-field input{width:100%}
+#catalog-summary{margin:12px 0 22px}
+.catalog-group+.catalog-group{margin-top:30px}
+.catalog-group-title{display:flex;align-items:center;gap:6px;margin-bottom:14px;font-size:17px}
+.catalog-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.catalog-item{display:flex;align-items:flex-start;gap:12px;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:15px}
+.catalog-icon{width:38px;height:38px;object-fit:contain;flex-shrink:0;border-radius:7px;background:var(--bg)}
+.catalog-item-content{min-width:0;display:flex;flex-direction:column;gap:4px}
+.catalog-item-name{font-size:13px;font-weight:600;line-height:1.5;overflow-wrap:anywhere;text-decoration:none}
+a.catalog-item-name:hover{color:var(--green);text-decoration:underline;text-underline-offset:3px}
+.catalog-item-version{font-size:10px;color:var(--muted);overflow-wrap:anywhere;line-height:1.6}
+.catalog-item-environment{font-size:9px;color:var(--green)}
+.catalog-empty{color:var(--muted);padding:24px 0;font-size:13px}
+.release-history-column{min-width:0}
+.release-entry h2{overflow-wrap:anywhere}
+.release-entry .release-platform{font-size:10px;color:var(--muted);margin-top:10px}
+.release-changes{margin:20px 0}
+.release-change-group{border-top:1px solid var(--line)}
+.release-change-group:last-child{border-bottom:1px solid var(--line)}
+.release-change-group>summary{cursor:pointer;padding:11px 0;color:var(--green);font-size:12px;font-weight:600}
+.release-change-list{list-style:none;margin:0;padding:0 0 13px}
+.release-change-item{padding:9px 0;min-width:0}
+.release-change-item+.release-change-item{border-top:1px solid #2b372e80}
+.release-change-item .catalog-item-name{font-size:12px}
+.release-entry .release-no-changes{font-size:11px;color:var(--muted);padding-bottom:13px}
+.release-history-download{margin-top:2px}
+.server-news-heading{border-top:1px solid var(--line);padding-top:30px;margin-top:36px}
+@media(max-width:1200px){.pack-download-actions{flex-basis:100%;margin-left:0;flex-direction:row;flex-wrap:wrap;align-items:center}}
+@media(max-width:680px){.catalog-list{grid-template-columns:1fr}.catalog-section .section-heading{align-items:flex-start;gap:12px;flex-wrap:wrap}.catalog-section .section-heading h2{font-size:18px}.overview-download{gap:15px}.overview-download>.button,.pack-download-actions>.button{width:100%}.pack-download-actions{gap:15px}.pack-download-copy .pack-approval-pending,.pack-download-copy .pack-link-pending{font-size:10px}.release-status-row{align-items:flex-start;flex-wrap:wrap}.catalog-item{padding:13px}.catalog-icon{width:34px;height:34px}}

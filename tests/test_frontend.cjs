@@ -105,7 +105,8 @@ function harness(stored = {}) {
   const document = {
     hidden: false,
     querySelector: selector => node(selector.replace(/^#/, '')),
-    querySelectorAll: () => [],
+    querySelectorAll: selector => selector.startsWith('.')
+      ? [...nodes.values()].flatMap(item => [item, ...item.descendants()]).filter(item => item.classList.contains(selector.slice(1))) : [],
     getElementById: id => nodes.get(id) || [...nodes.values()].flatMap(item => item.descendants()).find(item => item.id === id) || null,
     createElement: tag => new Node(tag),
     createElementNS: (_, tag) => new Node(tag),
@@ -155,6 +156,30 @@ const mapsAndNewerMods = [
   suggestion(2, 'Xaeros Minimap', { url: 'https://www.curseforge.com/minecraft/mc-mods/xaeros-minimap' }),
   ...Array.from({ length: 12 }, (_, index) => suggestion(index + 3, `New mod ${index + 3}`)),
 ];
+
+const releaseItems = [
+  { project_id: 1, file_id: 101, name: 'Create', version: '6.0.8', kind: 'mod', url: 'https://www.curseforge.com/minecraft/mc-mods/create', environment: 'client-and-server' },
+  { project_id: 2, file_id: 102, name: 'Xaero’s World Map', version: '1.40.11', kind: 'mod', url: 'https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map', environment: 'client' },
+  { project_id: 3, file_id: 103, name: 'Faithful 32x', version: '1.20.1-r1', kind: 'resourcepack', url: 'https://www.curseforge.com/minecraft/texture-packs/faithful-32x' },
+  { project_id: 4, file_id: 104, name: 'MakeUp UltraFast', version: '9.6', kind: 'shader', url: 'https://www.curseforge.com/minecraft/shaders/makeup-ultra-fast-shader' },
+];
+
+function publicCatalog() {
+  return {
+    schema_version: 1, latest_version: '1.0.0', releases: [{
+      version: '1.0.0', published_at: '2026-10-29T12:00:00Z', minecraft_version: '1.20.1', loader: 'forge-47.4.28',
+      download_url: 'downloads/Create-Magic-Lite-1.0.0.zip', sha256: 'a'.repeat(64),
+      mod_count: 2, resourcepack_count: 1, shader_count: 1, summary: 'En ny verden at udforske.',
+      items: releaseItems.map(item => ({ ...item })),
+      changes: { added: [releaseItems[1]], updated: [{ ...releaseItems[0], previous_version: '6.0.7' }], removed: [] },
+    }],
+  };
+}
+
+async function loadPublic(h, catalog = publicCatalog()) {
+  h.enqueue(response(catalog));
+  await h.run('loadReleases()');
+}
 
 async function load(h, items = mapsAndNewerMods) {
   h.enqueue(response({ suggestions: items }));
@@ -238,6 +263,7 @@ test('fresh page restores its session without briefly presenting an empty list',
   const h = harness();
   h.run("session = null; configuration.apiBase = ''; initializing = true;");
   const runtime = deferred();
+  h.enqueue(response(publicCatalog()));
   h.enqueue(runtime.promise);
   h.enqueue(response({ state: 'offline', players: { online: 0, max: 10 }, can_start: true }));
   h.enqueue(response({ suggestions: mapsAndNewerMods }));
@@ -310,6 +336,7 @@ test('oldest sorting exposes earlier suggestions and persists across a fresh pag
   assert.equal(h.storage.get('create-magic-suggestions-sort'), 'oldest');
   const fresh = harness(Object.fromEntries(h.storage));
   fresh.run("session = null; configuration.apiBase = ''; initializing = true;");
+  fresh.enqueue(response(publicCatalog()));
   fresh.enqueue(response({ apiBase: 'https://panel.example' }));
   fresh.enqueue(response({ state: 'offline', players: { online: 0, max: 10 }, can_start: true }));
   fresh.enqueue(response({ suggestions: mapsAndNewerMods }));
@@ -399,4 +426,157 @@ test('an older list response cannot undo a subsequently confirmed vote', async (
   assert.equal(findVote().getAttribute('aria-pressed'), 'true');
   assert.equal(findVote().textContent, '1');
   assert.equal(h.node('suggestions-list').getAttribute('aria-busy'), 'false');
+});
+
+test('public release renders every catalog category, safe project links and versions', async () => {
+  const h = harness();
+  await loadPublic(h);
+  const catalog = h.node('mod-catalog');
+  assert.deepEqual(catalog.children.map(group => group.children[0].textContent), ['Mods2', 'Ressourcepakker1', 'Shaders1']);
+  const rows = catalog.descendants().filter(item => item.classList.contains('catalog-item'));
+  assert.equal(rows.length, 4);
+  assert.match(catalog.textContent, /Create6.0.8Klient \+ server/);
+  assert.match(catalog.textContent, /Faithful 32x1.20.1-r1/);
+  assert.match(catalog.textContent, /MakeUp UltraFast9.6/);
+  assert.match(h.node('catalog-summary').textContent, /2 mods · 1 ressourcepakker · 1 shaderpakke/);
+  assert.equal(catalog.descendants().find(item => item.textContent === 'Faithful 32x').href, releaseItems[2].url);
+  assert.equal(catalog.getAttribute('aria-busy'), 'false');
+  const call = h.calls.at(-1);
+  assert.equal(call.url, './releases.json');
+  assert.equal(call.options.credentials, 'omit');
+  assert.equal(call.options.headers.Authorization, undefined);
+});
+
+test('catalog search finds maps and resource packs without mutating the complete inventory', async () => {
+  const h = harness();
+  await loadPublic(h);
+  h.node('catalog-search').value = 'MAP';
+  await h.node('catalog-search').fire('input');
+  assert.match(h.node('mod-catalog').textContent, /Xaero’s World Map/);
+  assert.doesNotMatch(h.node('mod-catalog').textContent, /Faithful|Create/);
+  assert.match(h.node('catalog-summary').textContent, /1 af 4/);
+  h.node('catalog-search').value = 'ressourcepakker';
+  await h.node('catalog-search').fire('input');
+  assert.match(h.node('mod-catalog').textContent, /Faithful 32x/);
+  h.node('catalog-search').value = 'no-such-name';
+  await h.node('catalog-search').fire('input');
+  assert.match(h.node('mod-catalog').textContent, /Ingen tilføjelser matcher/);
+  h.node('catalog-search').value = '';
+  await h.node('catalog-search').fire('input');
+  assert.equal(h.node('mod-catalog').descendants().filter(item => item.classList.contains('catalog-item')).length, 4);
+});
+
+test('release history preserves versions and shows added, updated and removed changes', async () => {
+  const h = harness();
+  const catalog = publicCatalog();
+  catalog.releases[0].changes.removed = [{ ...releaseItems[3], name: 'Old shader', version: '8.0' }];
+  catalog.releases.push({ ...catalog.releases[0], version: '0.9.0', published_at: '2026-10-27T12:00:00Z',
+    download_url: 'downloads/Create-Magic-Lite-0.9.0.zip', summary: 'Den tidligere udgivelse.',
+    changes: { added: [], updated: [], removed: [] } });
+  await loadPublic(h, catalog);
+  const history = h.node('release-history');
+  assert.equal(history.children.length, 2);
+  assert.match(history.children[0].textContent, /Version 1.0.0/);
+  assert.match(history.children[1].textContent, /Version 0.9.0/);
+  assert.deepEqual(history.children[0].descendants().filter(item => item.tagName === 'summary').map(item => item.textContent), ['Tilføjet (1)', 'Opdateret (1)', 'Fjernet (1)']);
+  assert.match(history.children[0].textContent, /6.0.7 → 6.0.8/);
+  assert.match(history.children[0].textContent, /Old shader8.0/);
+  assert.match(history.children[1].textContent, /Ingen ændringer i denne gruppe/);
+  assert.deepEqual(history.descendants().filter(item => item.classList.contains('release-history-download')).map(item => item.href), ['./downloads/Create-Magic-Lite-1.0.0.zip', './downloads/Create-Magic-Lite-0.9.0.zip']);
+});
+
+test('ZIP download remains available while CurseForge approval is pending and no friend is logged in', async () => {
+  const h = harness();
+  const zip = h.node('zip-download'); zip.className = 'release-download';
+  const project = h.node('project-download'); project.className = 'pack-share-link';
+  h.run("saveSession(null); available = false;");
+  h.enqueue(response({ apiBase: 'https://panel.example', packShareUrl: 'https://www.curseforge.com/minecraft/modpacks/create-magic-lite', packApprovalPending: true }));
+  await h.run('refreshConfiguration(true)');
+  await loadPublic(h);
+  assert.equal(project.hidden, true);
+  assert.equal(zip.hidden, false);
+  assert.equal(zip.href, './downloads/Create-Magic-Lite-1.0.0.zip');
+  assert.equal(zip.getAttribute('download'), '');
+  assert.match(zip.textContent, /Hent modpakken ZIP v1.0.0/);
+  assert.equal(h.run('session'), null);
+  assert.match(h.node('releases-status').textContent, /uden login.*slukket/);
+});
+
+test('public ZIP finishes loading while startup is still waiting for the server configuration', async () => {
+  const h = harness();
+  const zip = h.node('zip-download'); zip.className = 'release-download';
+  h.run("session = null; configuration.apiBase = ''; initializing = true;");
+  const runtime = deferred();
+  h.enqueue(response(publicCatalog()));
+  h.enqueue(runtime.promise);
+  const startup = h.run('initialize()');
+  for (let turn = 0; turn < 8; turn++) await Promise.resolve();
+  assert.equal(zip.hidden, false);
+  assert.equal(h.run('initializing'), true);
+  assert.equal(h.calls.length, 2);
+  runtime.resolve(response({}, 503));
+  await startup;
+  assert.equal(zip.hidden, false);
+  assert.equal(h.run('session'), null);
+});
+
+test('release downloads reject external URLs, traversal and encoded paths', async () => {
+  const h = harness();
+  const zip = h.node('zip-download'); zip.className = 'release-download';
+  const valid = publicCatalog();
+  valid.releases[0].download_url = 'downloads/Create-Magic-Lite-1.0.0+build.2.zip';
+  await loadPublic(h, valid);
+  assert.equal(zip.href, './downloads/Create-Magic-Lite-1.0.0+build.2.zip');
+  assert.equal(zip.hidden, false);
+  for (const url of [
+    'https://evil.example/downloads/Create-Magic-Lite-1.0.0.zip', '//evil.example/Create-Magic-Lite-1.0.0.zip',
+    '/downloads/Create-Magic-Lite-1.0.0.zip', 'downloads/../Create-Magic-Lite-1.0.0.zip',
+    'downloads\\Create-Magic-Lite-1.0.0.zip', 'downloads/Create-Magic-Lite-1.0.0.zip?redirect=evil',
+    'downloads/Create-Magic-Lite-1.0.0.zip#fragment', 'downloads/%43reate-Magic-Lite-1.0.0.zip',
+    'downloads/Create-Magic-Lite-1.0.0.zip/evil.exe', 'javascript:alert(1)',
+  ]) {
+    const catalog = publicCatalog(); catalog.releases[0].download_url = url;
+    await loadPublic(h, catalog);
+    assert.equal(zip.hidden, true, url);
+    assert.equal(h.node('release-history').descendants().filter(item => item.classList.contains('release-history-download')).length, 0, url);
+  }
+});
+
+test('unsafe catalog links are rendered as plain text and names never become markup', async () => {
+  const h = harness();
+  const catalog = publicCatalog();
+  catalog.releases[0].items = [
+    { ...releaseItems[0], name: '<img src=x onerror=alert(1)>', url: 'javascript:alert(1)', image_url: 'https://evil.example/image.png' },
+    { ...releaseItems[1], url: 'https://www.curseforge.com.evil.example/minecraft/mc-mods/xaeros-world-map' },
+    { ...releaseItems[2], url: 'https://user:pass@www.curseforge.com/minecraft/texture-packs/faithful-32x' },
+    { ...releaseItems[3], url: 'https://www.curseforge.com:8443/minecraft/shaders/makeup-ultra-fast-shader' },
+  ];
+  await loadPublic(h, catalog);
+  assert.match(h.node('mod-catalog').textContent, /<img src=x onerror=alert\(1\)>/);
+  assert.equal(h.node('mod-catalog').descendants().filter(item => ['img', 'a'].includes(item.tagName)).length, 0);
+});
+
+test('release failure explains the fallback and retry succeeds without affecting saved suggestions', async () => {
+  const h = harness();
+  const zip = h.node('zip-download'); zip.className = 'release-download';
+  await load(h);
+  const suggestionsBefore = h.listText();
+  h.enqueue(response({}, 503));
+  await h.run('loadReleases()');
+  assert.equal(zip.hidden, true);
+  assert.equal(h.node('release-retry').hidden, false);
+  assert.match(h.node('releases-status').textContent, /Kunne ikke hente/);
+  assert.match(h.node('mod-catalog').textContent, /kunne ikke hentes/);
+  assert.match(h.node('release-history').textContent, /kunne ikke hentes/);
+  assert.equal(h.listText(), suggestionsBefore);
+  h.enqueue(response(publicCatalog()));
+  await h.node('release-retry').fire('click');
+  assert.equal(zip.hidden, false);
+  assert.equal(h.node('release-retry').hidden, true);
+  h.enqueue(response({ schema_version: 99 }));
+  await h.run('loadReleases()');
+  assert.equal(zip.hidden, false);
+  assert.match(h.node('releases-status').textContent, /senest hentede/);
+  assert.match(h.node('mod-catalog').textContent, /Xaero’s World Map/);
+  assert.equal(h.listText(), suggestionsBefore);
 });

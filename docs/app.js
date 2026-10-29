@@ -60,6 +60,10 @@ let runtimeLastChecked = 0;
 let previewSequence = 0;
 let previewTimer;
 let toastTimer;
+let releaseCatalog = null;
+let releasesLoading = false;
+let releasesError = '';
+const RELEASE_KINDS = { mod: 'Mods', resourcepack: 'Ressourcepakker', shader: 'Shaders' };
 const STORAGE_KEY = 'create-magic-friend-session';
 const SORT_KEY = 'create-magic-suggestions-sort';
 const pages = { oversigt: 'Oversigt', modforslag: 'Modforslag', 'kom-i-gang': 'Kom i gang', modpakken: 'Modpakken', nyt: 'Nyt på serveren' };
@@ -140,6 +144,215 @@ function modLink(value) {
 function imageLink(value) {
   return safeLink(value, ['cdn.modrinth.com', 'media.forgecdn.net', 'mediafilez.forgecdn.net', 'edge.forgecdn.net', 'www.curseforge.com']);
 }
+
+function releaseDownloadLink(value) {
+  // Only files inside this site's downloads directory may become download links.
+  return typeof value === 'string' && /^downloads\/Create-Magic-Lite-[0-9][A-Za-z0-9._+-]*\.zip$/.test(value)
+    ? `./${value}` : null;
+}
+
+function catalogProjectLink(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.username || url.password || url.port) return null;
+    const curseforge = ['www.curseforge.com', 'curseforge.com'].includes(url.hostname)
+      && /^\/minecraft\/(?:mc-mods|texture-packs|shaders)\/[A-Za-z0-9_-]+\/?$/.test(url.pathname);
+    const modrinth = url.hostname === 'modrinth.com'
+      && /^\/(?:mod|resourcepack|shader)\/[A-Za-z0-9_-]+\/?$/.test(url.pathname);
+    return curseforge || modrinth ? `${url.origin}${url.pathname.replace(/\/$/, '')}` : null;
+  } catch { return null; }
+}
+
+function readReleaseCatalog(data) {
+  if (data?.schema_version !== 1 || !Array.isArray(data.releases) || !data.releases.length
+      || data.releases.length > 100 || typeof data.latest_version !== 'string') throw new Error('Invalid release catalog');
+  const readItems = items => {
+    if (!Array.isArray(items) || items.length > 1000) throw new Error('Invalid release items');
+    return items.map(item => {
+      if (!item || !Object.hasOwn(RELEASE_KINDS, item.kind) || typeof item.name !== 'string'
+          || !item.name.trim() || typeof item.version !== 'string'
+          || !Number.isSafeInteger(item.project_id) || item.project_id < 1
+          || !Number.isSafeInteger(item.file_id) || item.file_id < 1) throw new Error('Invalid release item');
+      return {
+        project_id: item.project_id, file_id: item.file_id, kind: item.kind,
+        name: item.name.slice(0, 200), version: item.version.slice(0, 200),
+        previous_version: typeof item.previous_version === 'string' ? item.previous_version.slice(0, 200) : '',
+        url: catalogProjectLink(item.url), image_url: imageLink(item.image_url),
+        environment: typeof item.environment === 'string' ? item.environment.slice(0, 80) : '',
+      };
+    });
+  };
+  const releases = data.releases.map(release => {
+    if (!release || typeof release.version !== 'string' || !release.version.trim()
+        || !release.changes) throw new Error('Invalid release');
+    const text = value => typeof value === 'string' ? value.slice(0, 2000) : '';
+    return {
+      version: release.version.slice(0, 80), published_at: text(release.published_at),
+      minecraft_version: text(release.minecraft_version), loader: text(release.loader),
+      summary: text(release.summary), download_url: releaseDownloadLink(release.download_url),
+      sha256: typeof release.sha256 === 'string' && /^[a-f0-9]{64}$/i.test(release.sha256) ? release.sha256 : '',
+      items: readItems(release.items),
+      changes: Object.fromEntries(['added', 'updated', 'removed'].map(kind => [kind, readItems(release.changes[kind])])),
+    };
+  });
+  if (new Set(releases.map(release => release.version)).size !== releases.length) throw new Error('Duplicate release');
+  const latest = releases.find(release => release.version === data.latest_version);
+  if (!latest) throw new Error('Missing latest release');
+  return { releases, latest };
+}
+
+function catalogItem(item, changed = false) {
+  const row = element('li', changed ? 'release-change-item' : 'catalog-item');
+  if (!changed && item.image_url) {
+    const image = element('img', 'catalog-icon');
+    image.src = item.image_url;
+    image.alt = '';
+    image.loading = 'lazy';
+    image.referrerPolicy = 'no-referrer';
+    image.addEventListener('error', () => { image.hidden = true; });
+    row.append(image);
+  }
+  const content = element('div', 'catalog-item-content');
+  const name = element(item.url ? 'a' : 'span', 'catalog-item-name', item.name);
+  if (item.url) {
+    name.href = item.url;
+    name.target = '_blank';
+    name.rel = 'noopener noreferrer';
+  }
+  content.append(name, element('span', 'catalog-item-version', item.previous_version && changed
+    ? `${item.previous_version} → ${item.version}` : item.version));
+  const environment = { client: 'Klient', server: 'Server', 'client-and-server': 'Klient + server' }[item.environment];
+  if (!changed && environment) content.append(element('span', 'catalog-item-environment', environment));
+  row.append(content);
+  return row;
+}
+
+function renderCatalog() {
+  const container = $('#mod-catalog');
+  container.setAttribute('aria-busy', String(releasesLoading));
+  if (!releaseCatalog) {
+    container.replaceChildren(element('p', 'catalog-empty', releasesLoading
+      ? 'Henter modlisten …' : 'Modlisten kunne ikke hentes. Prøv at hente den igen.'));
+    $('#catalog-summary').textContent = '';
+    return;
+  }
+  const items = releaseCatalog.latest.items;
+  const query = $('#catalog-search').value.trim().toLocaleLowerCase('da-DK');
+  const filtered = items.filter(item => `${item.name} ${item.version} ${item.environment} ${RELEASE_KINDS[item.kind]}`.toLocaleLowerCase('da-DK').includes(query));
+  const fragment = document.createDocumentFragment();
+  Object.entries(RELEASE_KINDS).forEach(([kind, title]) => {
+    const groupItems = filtered.filter(item => item.kind === kind).sort((a, b) => a.name.localeCompare(b.name, 'da'));
+    if (!groupItems.length) return;
+    const group = element('section', 'catalog-group');
+    const heading = element('h3', 'catalog-group-title', title);
+    heading.append(element('span', 'count-badge', String(groupItems.length)));
+    const list = element('ul', 'catalog-list');
+    groupItems.forEach(item => list.append(catalogItem(item)));
+    group.append(heading, list);
+    fragment.append(group);
+  });
+  if (!filtered.length) fragment.append(element('p', 'catalog-empty', 'Ingen tilføjelser matcher din søgning. Prøv et andet navn.'));
+  container.replaceChildren(fragment);
+  $('#catalog-summary').textContent = query
+    ? `${filtered.length} af ${items.length} tilføjelser matcher din søgning · version ${releaseCatalog.latest.version}`
+    : `${items.filter(item => item.kind === 'mod').length} mods · ${items.filter(item => item.kind === 'resourcepack').length} ressourcepakker · ${items.filter(item => item.kind === 'shader').length} shaderpakke · version ${releaseCatalog.latest.version}`;
+}
+
+function renderReleaseHistory() {
+  const history = $('#release-history');
+  history.setAttribute('aria-busy', String(releasesLoading));
+  if (!releaseCatalog) {
+    history.replaceChildren(element('p', 'catalog-empty', releasesLoading
+      ? 'Henter versionshistorikken …' : 'Versionshistorikken kunne ikke hentes. Prøv igen fra Modpakken.'));
+    return;
+  }
+  const fragment = document.createDocumentFragment();
+  releaseCatalog.releases.forEach(release => {
+    const article = element('article', 'timeline-item release-entry');
+    article.append(element('span', 'timeline-dot'));
+    const date = new Date(release.published_at);
+    if (!Number.isNaN(date.getTime())) {
+      const time = element('time', '', date.toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' }));
+      time.setAttribute('datetime', release.published_at);
+      article.append(time);
+    }
+    article.append(element('h2', '', `Version ${release.version}`));
+    if (release.summary) article.append(element('p', '', release.summary));
+    article.append(element('p', 'release-platform', `Minecraft ${release.minecraft_version} · ${release.loader}`));
+    const groups = element('div', 'release-changes');
+    Object.entries({ added: 'Tilføjet', updated: 'Opdateret', removed: 'Fjernet' }).forEach(([kind, title]) => {
+      const items = release.changes[kind];
+      const details = element('details', 'release-change-group');
+      const summary = element('summary', '', `${title} (${items.length})`);
+      details.append(summary);
+      if (items.length) {
+        const list = element('ul', 'release-change-list');
+        items.forEach(item => list.append(catalogItem(item, true)));
+        details.append(list);
+      } else details.append(element('p', 'release-no-changes', 'Ingen ændringer i denne gruppe.'));
+      groups.append(details);
+    });
+    article.append(groups);
+    if (release.download_url) {
+      const download = element('a', 'text-link release-history-download', `Hent ZIP v${release.version}`);
+      download.href = release.download_url;
+      download.setAttribute('download', '');
+      download.append(makeIcon('arrow-right'));
+      article.append(download);
+    }
+    fragment.append(article);
+  });
+  history.replaceChildren(fragment);
+}
+
+function renderPublicReleases() {
+  const latest = releaseCatalog?.latest;
+  $$('.release-download').forEach(link => {
+    link.hidden = !latest?.download_url;
+    if (latest?.download_url) {
+      link.href = latest.download_url;
+      link.setAttribute('download', '');
+      link.replaceChildren(document.createTextNode(`Hent modpakken ZIP v${latest.version}`), makeIcon('box'));
+    } else link.removeAttribute('href');
+  });
+  $('#pack-release-version').textContent = latest ? `VERSION ${latest.version}` : 'DEN FÆLLES PAKKE';
+  $('#latest-release-summary').textContent = latest
+    ? `Version ${latest.version} · ${latest.summary}` : 'Se modpakken og versionshistorikken.';
+  $('#release-integrity').hidden = !latest?.sha256;
+  $('#release-sha256').textContent = latest?.sha256 || '';
+  $('#release-retry').hidden = !releasesError;
+  $('#release-retry').disabled = releasesLoading;
+  const message = releasesError || (releasesLoading ? 'Henter den seneste udgivelse …'
+    : latest?.download_url ? 'ZIP-filen kan hentes uden login, også når servercomputeren er slukket.'
+      : 'Denne udgivelse har endnu ingen ZIP-fil.');
+  setFeedback($('#releases-status'), message, !!releasesError);
+  renderCatalog();
+  renderReleaseHistory();
+}
+
+async function loadReleases() {
+  if (releasesLoading) return;
+  releasesLoading = true;
+  releasesError = '';
+  renderPublicReleases();
+  try {
+    const response = await fetch('./releases.json', {
+      cache: 'no-store', credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer',
+      headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error('Release request failed');
+    releaseCatalog = readReleaseCatalog(await response.json());
+  } catch {
+    releasesError = releaseCatalog
+      ? 'Kunne ikke opdatere udgivelsen. Den senest hentede modliste og ZIP vises stadig.'
+      : 'Kunne ikke hente udgivelsen. Prøv igen om lidt; du behøver ikke logge ind.';
+  } finally {
+    releasesLoading = false;
+    renderPublicReleases();
+  }
+}
+$('#catalog-search').addEventListener('input', renderCatalog);
+$('#release-retry').addEventListener('click', loadReleases);
 
 async function api(path, body, authenticated = true) {
   if (!configuration.apiBase) throw new Error('Forbindelsen til computeren er ikke aktiveret endnu.');
@@ -571,6 +784,8 @@ async function initialize() {
     if (['newest', 'oldest', 'votes'].includes(sort)) $('#suggestions-sort').value = sort;
   } catch { /* Default sorting works when storage is unavailable. */ }
   route();
+  // The public ZIP and inventory must not wait for the owner's PC or friend login.
+  const releasesReady = loadReleases();
   await refreshConfiguration(true);
   try {
     const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
@@ -579,7 +794,7 @@ async function initialize() {
   initializing = false;
   renderAccount();
   renderStatus(null);
-  await Promise.allSettled([refreshStatus(), ...(location.hash === '#modforslag' ? [loadSuggestions()] : [])]);
+  await Promise.allSettled([releasesReady, refreshStatus(), ...(location.hash === '#modforslag' ? [loadSuggestions()] : [])]);
   setInterval(() => { if (!document.hidden) refreshStatus(); }, 15000);
   setInterval(async () => {
     if (!document.hidden && await refreshConfiguration()) await refreshStatus();
