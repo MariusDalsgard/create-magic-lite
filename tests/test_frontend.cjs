@@ -161,6 +161,79 @@ async function load(h, items = mapsAndNewerMods) {
   await h.run('loadSuggestions()');
 }
 
+test('runtime configuration opens both permanent CurseForge projects and existing share links', async () => {
+  const h = harness();
+  const download = h.node('pack-download-test');
+  const pending = h.node('pack-pending-test');
+  h.document.querySelectorAll = selector => selector === '.pack-share-link' ? [download]
+    : selector === '.pack-link-pending' ? [pending] : [];
+  for (const url of [
+    'https://www.curseforge.com/minecraft/modpacks/create-magic-lite',
+    'https://curseforge.com/minecraft/modpacks/create-magic-lite/',
+    'https://www.curseforge.com/minecraft/share/tLT6EZy0',
+  ]) {
+    h.enqueue(response({ apiBase: 'https://panel.example', packShareUrl: url }));
+    await h.run('refreshConfiguration(true)');
+    assert.equal(h.run('configuration.packShareUrl'), url);
+    assert.equal(download.href, url);
+    assert.equal(download.hidden, false);
+    assert.equal(pending.hidden, true);
+  }
+});
+
+test('invalid pack destinations hide download links instead of retaining a stale project link', async () => {
+  const h = harness();
+  const download = h.node('pack-download-test');
+  const pending = h.node('pack-pending-test');
+  h.document.querySelectorAll = selector => selector === '.pack-share-link' ? [download]
+    : selector === '.pack-link-pending' ? [pending] : [];
+  for (const url of [
+    null,
+    'https://www.curseforge.com/minecraft/modpacks/',
+    'https://www.curseforge.com/minecraft/modpacks/create-magic-lite/files',
+    'https://www.curseforge.com/minecraft/mc-mods/create',
+    'https://www.curseforge.com/minecraft/share/',
+    'https://www.curseforge.com.evil.example/minecraft/modpacks/create-magic-lite',
+    'https://name:password@www.curseforge.com/minecraft/modpacks/create-magic-lite',
+    'https://www.curseforge.com:8443/minecraft/modpacks/create-magic-lite',
+    'http://www.curseforge.com/minecraft/modpacks/create-magic-lite',
+    'javascript:alert(1)',
+  ]) {
+    h.run("configuration.packShareUrl = 'https://www.curseforge.com/minecraft/modpacks/previous-pack';");
+    download.hidden = false;
+    pending.hidden = true;
+    h.enqueue(response({ apiBase: 'https://panel.example', packShareUrl: url }));
+    await h.run('refreshConfiguration(true)');
+    assert.equal(h.run('configuration.packShareUrl'), null, String(url));
+    assert.equal(download.hidden, true, String(url));
+    assert.equal(pending.hidden, false, String(url));
+  }
+});
+
+test('a pending CurseForge project becomes downloadable only after its approval flag clears', async () => {
+  const h = harness();
+  const download = h.node('pack-download-test');
+  const pendingLink = h.node('pack-pending-test');
+  const approval = h.node('pack-approval-test');
+  const fallback = h.node('pack-fallback-test');
+  const nodes = new Map([
+    ['.pack-share-link', [download]], ['.pack-link-pending', [pendingLink]],
+    ['.pack-approval-pending', [approval]], ['.pack-fallback', [fallback]],
+  ]);
+  h.document.querySelectorAll = selector => nodes.get(selector) || [];
+  const url = 'https://www.curseforge.com/minecraft/modpacks/create-magic-lite';
+  for (const pending of [true, false]) {
+    h.enqueue(response({ apiBase: 'https://panel.example', packShareUrl: url, packApprovalPending: pending }));
+    await h.run('refreshConfiguration(true)');
+    assert.equal(h.run('configuration.packShareUrl'), url);
+    assert.equal(download.hidden, pending);
+    assert.equal(approval.hidden, !pending);
+    assert.equal(fallback.hidden, !pending);
+    assert.equal(pendingLink.hidden, true);
+    assert.equal(h.run('session.token'), 'session-a');
+  }
+});
+
 test('fresh page restores its session without briefly presenting an empty list', async () => {
   const h = harness();
   h.run("session = null; configuration.apiBase = ''; initializing = true;");

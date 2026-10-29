@@ -43,7 +43,7 @@ function element(tag, className, text) {
   return node;
 }
 
-let configuration = { apiBase: '', serverAddress: '83.88.146.132:25566', packShareUrl: null, githubRepoUrl: '' };
+let configuration = { apiBase: '', serverAddress: '83.88.146.132:25566', packShareUrl: null, packApprovalPending: false, githubRepoUrl: '' };
 let session = null;
 let available = null;
 let currentStatus = null;
@@ -118,6 +118,13 @@ function safeLink(value, hosts, pathPrefix = '/') {
     const url = new URL(value);
     return url.protocol === 'https:' && !url.username && !url.password && hosts.includes(url.hostname.toLowerCase()) && url.pathname.startsWith(pathPrefix) ? url.href : null;
   } catch { return null; }
+}
+
+function packLink(value) {
+  const link = safeLink(value, ['www.curseforge.com', 'curseforge.com']);
+  if (!link) return null;
+  const url = new URL(link);
+  return !url.port && /^\/minecraft\/(?:share|modpacks)\/[A-Za-z0-9_-]+\/?$/.test(url.pathname) ? url.href : null;
 }
 
 function modLink(value) {
@@ -533,18 +540,21 @@ async function refreshConfiguration(force = false) {
       const runtime = await response.json();
       configuration.apiBase = apiBaseFrom(runtime.apiBase);
       if (typeof runtime.serverAddress === 'string' && /^[A-Za-z0-9.\-]+:\d{1,5}$/.test(runtime.serverAddress)) configuration.serverAddress = runtime.serverAddress;
-      configuration.packShareUrl = safeLink(runtime.packShareUrl, ['www.curseforge.com', 'curseforge.com'], '/minecraft/share/');
+      configuration.packShareUrl = packLink(runtime.packShareUrl);
+      configuration.packApprovalPending = runtime.packApprovalPending === true;
       configuration.githubRepoUrl = safeLink(runtime.githubRepoUrl, ['github.com']);
     }
   } catch { /* Keep the last verified configuration during a temporary failure. */ }
   finally { runtimeBusy = false; }
   $$('.server-address').forEach(node => { node.textContent = configuration.serverAddress; });
   $$('.pack-share-link').forEach(link => {
-    link.hidden = !configuration.packShareUrl;
+    link.hidden = !configuration.packShareUrl || configuration.packApprovalPending;
     if (configuration.packShareUrl) link.href = configuration.packShareUrl;
     else link.removeAttribute('href');
   });
-  $$('.pack-link-pending, .pack-fallback').forEach(node => { node.hidden = !!configuration.packShareUrl; });
+  $$('.pack-link-pending').forEach(node => { node.hidden = !!configuration.packShareUrl; });
+  $$('.pack-fallback').forEach(node => { node.hidden = !!configuration.packShareUrl && !configuration.packApprovalPending; });
+  $$('.pack-approval-pending').forEach(node => { node.hidden = !configuration.packShareUrl || !configuration.packApprovalPending; });
   if (configuration.githubRepoUrl) { $('#github-link').href = configuration.githubRepoUrl; $('#github-link').hidden = false; }
   if (previousBase && previousBase !== configuration.apiBase) {
     available = null;

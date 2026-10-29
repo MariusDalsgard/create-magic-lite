@@ -53,7 +53,9 @@ Vennekoden er tilfældig. Backend gemmer en scrypt-hash og udsteder kortlivede s
 
 Dette er fælles adgang for en lille vennegruppe: navnene er selvvalgte, ikke verificerede konti. En ven kan vælge et andet navn, så stemmer er uformelle. Del ikke vennekoden offentligt. Forslag og stemmer gemmes lokalt i SQLite; tag backup af privatmappen.
 
-CurseForge kan blokere automatisk hentning. I så fald bliver linket stadig gemt med et pladsholderbillede. Modrinth-forhåndsvisningen hentes fra det officielle projekt-API. Modpakkens delingslink skal opdateres i `runtime.json`, når et nyt CurseForge-link er genereret; gamle tidsbegrænsede links bruges ikke automatisk.
+CurseForge kan blokere automatisk hentning. I så fald bliver linket stadig gemt med et pladsholderbillede. Modrinth-forhåndsvisningen hentes fra det officielle projekt-API. Feltet `packShareUrl` i `docs/runtime.json` på GitHub kan pege på enten et midlertidigt `/minecraft/share/`-link eller en fast `/minecraft/modpacks/<slug>`-side. Når pakken er udgivet, bruges den faste side til alle nye versioner. Venner installerer projektet én gang og vælger derefter opdateringer i CurseForge-appen; en gammel profil fra en delingskode kan kræve denne første installation. Supervisoren læser den aktuelle fil fra GitHub og bevarer modpakkelinket, når tunneladressen opdateres.
+
+Mens et nyt CurseForge-projekt afventer godkendelse, kan dets faste URL gemmes med `packApprovalPending: true` i samme fil. Siden viser da en besked om godkendelsen og skjuler downloadknapperne. Sæt feltet til `false` (eller fjern det), når projektet og en downloadbar udgave faktisk er offentligt tilgængelige. Dette ændrer ikke adgangen til serverstart eller modforslag.
 
 ## Kontrol
 
