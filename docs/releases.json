@@ -1,7 +1,691 @@
 {
   "schema_version": 1,
-  "latest_version": "1.0.0",
+  "latest_version": "1.1.0",
   "releases": [
+    {
+      "changes": {
+        "added": [
+          {
+            "environment": "client-and-server",
+            "file_id": 4614852,
+            "kind": "mod",
+            "name": "Iron Chests",
+            "project_id": 228756,
+            "url": "https://www.curseforge.com/minecraft/mc-mods/iron-chests",
+            "version": "14.4.4"
+          },
+          {
+            "environment": "client-and-server",
+            "file_id": 8336490,
+            "kind": "mod",
+            "name": "SecurityCraft",
+            "project_id": 64760,
+            "url": "https://www.curseforge.com/minecraft/mc-mods/security-craft",
+            "version": "1.10.2.1"
+          },
+          {
+            "environment": "client-and-server",
+            "file_id": 4716851,
+            "kind": "mod",
+            "name": "Simple Shops",
+            "project_id": 517272,
+            "url": "https://www.curseforge.com/minecraft/mc-mods/simple-shops",
+            "version": "1.2.2"
+          }
+        ],
+        "removed": [],
+        "updated": []
+      },
+      "download_url": "downloads/Create-Magic-Lite-1.1.0.zip",
+      "items": [
+        {
+          "environment": "client-and-server",
+          "file_id": 7476624,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/91/390/256/256/636247450651683363.png",
+          "kind": "mod",
+          "name": "Advanced Hook Launchers",
+          "project_id": 244849,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/advanced-hook-launchers",
+          "version": "10.1.3.0"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 5848216,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/891/449/256/256/638332962331987353.png",
+          "kind": "mod",
+          "name": "Alex's Caves",
+          "project_id": 924854,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/alexs-caves",
+          "version": "2.0.2"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 5698791,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/543/777/256/256/637874731161865623.jpeg",
+          "kind": "mod",
+          "name": "Alex's Mobs",
+          "project_id": 426558,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/alexs-mobs",
+          "version": "1.22.9"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 4770828,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/47/527/256/256/636066936394500688.png",
+          "kind": "mod",
+          "name": "AppleSkin",
+          "project_id": 248787,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/appleskin",
+          "version": "2.5.1"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 5137938,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/313/420/256/256/637408811378175814.png",
+          "kind": "mod",
+          "name": "Architectury API",
+          "project_id": 419699,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/architectury-api",
+          "version": "9.2.14"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 7903806,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/444/622/256/256/637699815276651872.png",
+          "kind": "mod",
+          "name": "Artifacts",
+          "project_id": 312353,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/artifacts",
+          "version": "9.5.19"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8969708,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1107/117/256/256/638657111836546584.png",
+          "kind": "mod",
+          "name": "Balm",
+          "project_id": 531761,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/balm",
+          "version": "7.3.44"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 7476570,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/214/988/256/256/636995179309161946.png",
+          "kind": "mod",
+          "name": "Citadel",
+          "project_id": 331936,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/citadel",
+          "version": "2.6.3"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 5729105,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/282/467/256/256/637289313020452406.png",
+          "kind": "mod",
+          "name": "Cloth Config API (Fabric/Forge/NeoForge)",
+          "project_id": 348521,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/cloth-config",
+          "version": "11.1.136"
+        },
+        {
+          "environment": "client",
+          "file_id": 9338833,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/975/602/256/256/638479075930399380.png",
+          "kind": "mod",
+          "name": "Collective",
+          "project_id": 342584,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/collective",
+          "version": "8.67"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 7178761,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1065/184/256/256/638598725500886388.png",
+          "kind": "mod",
+          "name": "Create",
+          "project_id": 328085,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/create",
+          "version": "6.0.8"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 7208610,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/405/250/256/256/637616939209778882.png",
+          "kind": "mod",
+          "name": "Create Crafts & Additions",
+          "project_id": 439890,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/createaddition",
+          "version": "1.3.3"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8822431,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1682/115/256/256/639068700185455615.png",
+          "kind": "mod",
+          "name": "Create: Copycats+",
+          "project_id": 968398,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/copycats",
+          "version": "3.0.10"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8567881,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1224/199/256/256/638802282774958966.png",
+          "kind": "mod",
+          "name": "Create: Enchantment Industry",
+          "project_id": 688768,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/create-enchantment-industry",
+          "version": "1.4.1"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8745475,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1065/609/256/256/638599304770885171.webp",
+          "kind": "mod",
+          "name": "Create: Steam 'n' Rails",
+          "project_id": 688231,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/create-steam-n-rails",
+          "version": "1.7.3"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 5869180,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/812/326/256/256/638185606434483161.jpeg",
+          "kind": "mod",
+          "name": "Cristel Lib",
+          "project_id": 856996,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/cristel-lib",
+          "version": "1.1.6"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8685426,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/728/545/256/256/638081057334527379.png",
+          "kind": "mod",
+          "name": "Critters and Companions",
+          "project_id": 574913,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/critters-and-companions",
+          "version": "2.7.1"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 6418456,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/195/772/256/256/636881112930494939.png",
+          "kind": "mod",
+          "name": "Curios API",
+          "project_id": 309927,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/curios",
+          "version": "5.14.1"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 9004753,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1189/514/256/256/638764417521176751.png",
+          "kind": "mod",
+          "name": "Distant Horizons: A Level of Detail mod",
+          "project_id": 508933,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/distant-horizons",
+          "version": "3.3.3"
+        },
+        {
+          "environment": "client",
+          "file_id": 5681725,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/893/778/256/256/638336829931216743.png",
+          "kind": "mod",
+          "name": "Embeddium",
+          "project_id": 908741,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/embeddium",
+          "version": "0.3.31"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 7666426,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1202/841/256/256/638780103276120659.png",
+          "kind": "mod",
+          "name": "Enchanted: Wands & Tomes",
+          "project_id": 1223794,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/enchanted-wands-tomes",
+          "version": "1.1.0"
+        },
+        {
+          "environment": "client",
+          "file_id": 9100267,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/345/318/256/256/637492631463701682.png",
+          "kind": "mod",
+          "name": "Entity Culling Fabric/Forge",
+          "project_id": 448233,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/entityculling",
+          "version": "1.11.3"
+        },
+        {
+          "environment": "client",
+          "file_id": 9189705,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1004/127/256/256/638525051411002219.png",
+          "kind": "mod",
+          "name": "Essential Mod",
+          "project_id": 546670,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/essential-mod",
+          "version": "1.5.1"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8082824,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/656/579/256/256/638056688029543379.png",
+          "kind": "mod",
+          "name": "Explorify – Dungeons & Structures",
+          "project_id": 698309,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/explorify",
+          "version": "1.6.5"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 6655718,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1219/142/256/256/638798088223804758_animated.gif",
+          "kind": "mod",
+          "name": "Exposure",
+          "project_id": 871755,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/exposure",
+          "version": "1.7.16"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 4810975,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/323/941/256/256/637438748346113688.jpeg",
+          "kind": "mod",
+          "name": "FerriteCore ((Neo)Forge)",
+          "project_id": 429235,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/ferritecore",
+          "version": "6.0.1"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8070669,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/596/140/256/256/637971751537515782.png",
+          "kind": "mod",
+          "name": "FLIB",
+          "project_id": 661261,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/flib",
+          "version": "0.0.16"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8958987,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/990/353/256/256/638503611759502803.png",
+          "kind": "mod",
+          "name": "Floral Tonics & Tinctures",
+          "project_id": 1012896,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/floral-tonics-tinctures",
+          "version": "2.2.3"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 9309713,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/39/528/256/256/635982217182008015.png",
+          "kind": "mod",
+          "name": "ForgeEndertech",
+          "project_id": 244844,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/forgeendertech",
+          "version": "11.1.11.2"
+        },
+        {
+          "environment": "client",
+          "file_id": 9152471,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/281/553/256/256/637286013907127784.png",
+          "kind": "mod",
+          "name": "Full Brightness Toggle",
+          "project_id": 391656,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/full-brightness-toggle",
+          "version": "4.9"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8285794,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1081/393/256/256/638621132937140582.png",
+          "kind": "mod",
+          "name": "GeckoLib",
+          "project_id": 388172,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/geckolib",
+          "version": "4.8.4"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8865821,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/656/842/256/256/638056986831428322.png",
+          "kind": "mod",
+          "name": "Immersive Aircraft",
+          "project_id": 666014,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/immersive-aircraft",
+          "version": "1.5.0"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 9151117,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/995/787/256/256/638512172106489990.png",
+          "kind": "mod",
+          "name": "Integrated API",
+          "project_id": 817709,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/integrated-api",
+          "version": "1.9.1"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 7787515,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/995/786/256/256/638512171328390575.png",
+          "kind": "mod",
+          "name": "Integrated Dungeons and Structures",
+          "project_id": 605375,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/idas",
+          "version": "1.13.0"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 4614852,
+          "kind": "mod",
+          "name": "Iron Chests",
+          "project_id": 228756,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/iron-chests",
+          "version": "14.4.4"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8479276,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/207/323/256/256/636965628804677340.png",
+          "kind": "mod",
+          "name": "Jade 🔍",
+          "project_id": 324717,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/jade",
+          "version": "11.13.3"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8778011,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/29/69/256/256/635838945588716414.jpeg",
+          "kind": "mod",
+          "name": "Just Enough Items (JEI)",
+          "project_id": 238222,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/jei",
+          "version": "15.56.0.205"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 7263076,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1131/830/256/256/638691606432990450.png",
+          "kind": "mod",
+          "name": "Lootr (Forge & NeoForge)",
+          "project_id": 361276,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/lootr",
+          "version": "0.7.35.94"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 9309378,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/881/436/256/256/638311693460984164.png",
+          "kind": "mod",
+          "name": "ModernFix",
+          "project_id": 790626,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/modernfix",
+          "version": "5.27.91"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 9354258,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/402/662/256/256/637610797055895331.png",
+          "kind": "mod",
+          "name": "Moonlight Lib",
+          "project_id": 499980,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/selene",
+          "version": "2.16.38B"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 9289192,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1948/981/256/256/639208588600998397.png",
+          "kind": "mod",
+          "name": "Naturalist",
+          "project_id": 627986,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/naturalist",
+          "version": "2.0.9"
+        },
+        {
+          "environment": "client",
+          "file_id": 6020952,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/495/526/256/256/637808944989585825.jpeg",
+          "kind": "mod",
+          "name": "Oculus",
+          "project_id": 581495,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/oculus",
+          "version": "1.8.0"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 5046069,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/144/153/256/256/636553981575772547.png",
+          "kind": "mod",
+          "name": "Paragliders",
+          "project_id": 289240,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/paragliders",
+          "version": "20.1.3"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 6427817,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/588/295/256/256/637958240318838626.png",
+          "kind": "mod",
+          "name": "Quark",
+          "project_id": 243121,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/quark",
+          "version": "4.0-462"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 6022461,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/157/93/256/256/636643301624754170.png",
+          "kind": "mod",
+          "name": "Roots Classic",
+          "project_id": 295780,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/roots-classic",
+          "version": "1.4.2"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8336490,
+          "kind": "mod",
+          "name": "SecurityCraft",
+          "project_id": 64760,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/security-craft",
+          "version": "1.10.2.1"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 4716851,
+          "kind": "mod",
+          "name": "Simple Shops",
+          "project_id": 517272,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/simple-shops",
+          "version": "1.2.2"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 9323244,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/375/56/256/256/637549610342642859.png",
+          "kind": "mod",
+          "name": "Sophisticated Backpacks",
+          "project_id": 422301,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/sophisticated-backpacks",
+          "version": "3.26.15.2228"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 9323153,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/540/438/256/256/637866039314801108.png",
+          "kind": "mod",
+          "name": "Sophisticated Core",
+          "project_id": 618298,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/sophisticated-core",
+          "version": "1.5.16.2433"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 5351581,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/562/581/256/256/637916418629477919.png",
+          "kind": "mod",
+          "name": "Structory",
+          "project_id": 636540,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/structory",
+          "version": "1.3.5"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 9140345,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/358/166/256/256/637518566737953306_animated.gif",
+          "kind": "mod",
+          "name": "Supplementaries",
+          "project_id": 412082,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/supplementaries",
+          "version": "3.1.44"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 5512076,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/554/659/256/256/637897033487568646.png",
+          "kind": "mod",
+          "name": "Terralith",
+          "project_id": 513688,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/terralith",
+          "version": "2.5.4"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 4923828,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/551/161/256/256/637888384577155054.png",
+          "kind": "mod",
+          "name": "Towns and Towers",
+          "project_id": 626761,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/towns-and-towers",
+          "version": "1.12"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8849482,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1107/108/256/256/638657104456838765.png",
+          "kind": "mod",
+          "name": "Waystones",
+          "project_id": 245755,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/waystones",
+          "version": "14.1.21"
+        },
+        {
+          "environment": "client",
+          "file_id": 9067172,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/92/854/256/256/636258666554688823.png",
+          "kind": "mod",
+          "name": "Xaero's Minimap",
+          "project_id": 263420,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/xaeros-minimap",
+          "version": "26.6.0"
+        },
+        {
+          "environment": "client",
+          "file_id": 9067273,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/196/654/256/256/636886857118683130.png",
+          "kind": "mod",
+          "name": "Xaero's World Map",
+          "project_id": 317780,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map",
+          "version": "1.47.0"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 6336646,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/598/727/256/256/637977258872864320.png",
+          "kind": "mod",
+          "name": "YetAnotherConfigLib",
+          "project_id": 667299,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/yacl",
+          "version": "3.6.6"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 8844049,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1501/206/256/256/638975188760115866.png",
+          "kind": "mod",
+          "name": "Yori3o's Grappling Hooks",
+          "project_id": 1376009,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/yori3os-grappling-hooks",
+          "version": "5.1.1"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 5769971,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/881/136/256/256/638311022829381213.png",
+          "kind": "mod",
+          "name": "YUNG's API (Forge/NeoForge)",
+          "project_id": 421850,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/yungs-api",
+          "version": "4.0.6"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 5271360,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/881/111/256/256/638311013966535180.png",
+          "kind": "mod",
+          "name": "YUNG's Better Dungeons (Forge/NeoForge)",
+          "project_id": 510089,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/yungs-better-dungeons",
+          "version": "4.0.4"
+        },
+        {
+          "environment": "client-and-server",
+          "file_id": 7335229,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/941/302/256/256/638422437053245782.png",
+          "kind": "mod",
+          "name": "Zeta",
+          "project_id": 968868,
+          "url": "https://www.curseforge.com/minecraft/mc-mods/zeta",
+          "version": "1.0-31"
+        },
+        {
+          "environment": "client",
+          "file_id": 8281081,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1146/998/256/256/638713579895178587.png",
+          "kind": "resourcepack",
+          "name": "Faithful 32x",
+          "project_id": 436482,
+          "url": "https://www.curseforge.com/minecraft/texture-packs/faithful-32x",
+          "version": "1.20.1"
+        },
+        {
+          "environment": "client",
+          "file_id": 4626083,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1147/2/256/256/638713583662212158.png",
+          "kind": "resourcepack",
+          "name": "Faithful 64x",
+          "project_id": 419139,
+          "url": "https://www.curseforge.com/minecraft/texture-packs/faithful-64x",
+          "version": "Beta 9"
+        },
+        {
+          "environment": "client",
+          "file_id": 9262057,
+          "image_url": "https://media.forgecdn.net/avatars/thumbnails/1044/516/256/256/638572074817465930.webp",
+          "kind": "shader",
+          "name": "MakeUp - Ultra Fast | Shaders",
+          "project_id": 431203,
+          "url": "https://www.curseforge.com/minecraft/shaders/makeup-ultra-fast-shader",
+          "version": "9.6"
+        }
+      ],
+      "loader": "forge-47.4.28",
+      "minecraft_version": "1.20.1",
+      "mod_count": 61,
+      "published_at": "2026-10-30T22:07:00Z",
+      "resourcepack_count": 2,
+      "sha256": "2016681ad7484f2f5afac81a0cd57caa71a5cfde5224f40e6e251fac4d77d222",
+      "shader_count": 1,
+      "summary": "SecurityCraft, Iron Chests og Simple Shops tilføjet. Serverfilerne er klar; opdater først spillet, når serveren skifter til 1.1.0 ved en planlagt genstart.",
+      "version": "1.1.0"
+    },
     {
       "changes": {
         "added": [

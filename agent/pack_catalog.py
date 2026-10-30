@@ -31,6 +31,7 @@ ENVIRONMENTS = {"client", "server", "client-and-server", "unknown"}
 OVERRIDES = {
     "overrides/README.txt", "overrides/config/DistantHorizons.toml",
     "overrides/config/alexscaves-client.toml", "overrides/config/oculus.properties",
+    "overrides/defaultconfigs/securitycraft-server.toml",
 }
 
 
@@ -148,7 +149,7 @@ def allowed_entry(name, directory=False):
             and all(not p.endswith((".", " ")) for p in parts), "Unsafe ZIP member path")
     require(not PurePosixPath(clean).is_absolute(), "Absolute ZIP member path")
     if directory:
-        require(clean in {"overrides", "overrides/config", "overrides/shaderpacks"}, "ZIP directory is not allowed")
+        require(clean in {"overrides", "overrides/config", "overrides/shaderpacks", "overrides/defaultconfigs"}, "ZIP directory is not allowed")
     else:
         require(clean in {"manifest.json", "modlist.html"} | OVERRIDES
                 or bool(re.fullmatch(r"overrides/shaderpacks/MakeUp-UltraFast-[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*\.zip\.txt", clean)),

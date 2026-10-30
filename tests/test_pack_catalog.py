@@ -111,6 +111,7 @@ class PackCatalogTests(unittest.TestCase):
             ("overrides/config/DistantHorizons.toml", "enabled = true\n"),
             ("overrides/config/alexscaves-client.toml", "biome_ambient_light_coloring = false\n"),
             ("overrides/config/oculus.properties", "enableShaders=true\n"),
+            ("overrides/defaultconfigs/securitycraft-server.toml", "codebreaker_chance = -1.0\n"),
             ("overrides/shaderpacks/MakeUp-UltraFast-9.6.zip.txt", "SHADOWS=false\n"),
         ])
         self.assertIsInstance(catalog.validate_archive(archive, self.metadata), dict)
@@ -336,6 +337,7 @@ class PackCatalogTests(unittest.TestCase):
             "mods/raw.jar", "overrides/mods/raw.jar", "overrides/config/secret.jar",
             "overrides/config/embeddium-fingerprint.json", "overrides/config/jei/world/history.ini",
             "overrides/essential/config.toml", "overrides/servers.dat", "overrides/options.txt",
+            "overrides/defaultconfigs/private.toml", "overrides/world/serverconfig/securitycraft-server.toml",
             "overrides/shaderpacks/MakeUp-UltraFast-../../private.zip.txt",
         ]
         for name in names:
