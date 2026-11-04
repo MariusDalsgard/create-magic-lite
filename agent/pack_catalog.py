@@ -32,6 +32,14 @@ OVERRIDES = {
     "overrides/README.txt", "overrides/config/DistantHorizons.toml",
     "overrides/config/alexscaves-client.toml", "overrides/config/oculus.properties",
     "overrides/defaultconfigs/securitycraft-server.toml",
+    "overrides/config/quark-common.toml",
+    "overrides/config/paxi/datapack_load_order.json",
+    "overrides/config/paxi/datapacks/create-magic-lite-compat/pack.mcmeta",
+    "overrides/config/paxi/datapacks/create-magic-lite-compat/README.txt",
+    "overrides/config/paxi/datapacks/create-magic-lite-compat/data/industrialforegoing/advancements/recipes/misc/simulated_hydroponic_bed.json",
+    "overrides/config/paxi/datapacks/create-magic-lite-compat/data/pneumaticcraft/recipes/drone_interface.json",
+    "overrides/config/paxi/datapacks/create-magic-lite-compat/data/sgjourney/recipes/naquadah_graver.json",
+    "overrides/config/paxi/datapacks/create-magic-lite-compat/data/sgjourney/recipes/netherite_graver.json",
 }
 
 

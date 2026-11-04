@@ -150,6 +150,39 @@ class PackCatalogTests(unittest.TestCase):
         self.assertNotIn(str(self.private), encoded)
         self.assertNotIn(str(archive), encoded)
 
+    def test_space_tech_release_accepts_reviewed_quark_and_paxi_overrides(self):
+        prefix = "overrides/config/paxi/datapacks/create-magic-lite-compat/"
+        archive = self.archive(version="1.5.0", extra_entries=[
+            ("overrides/config/quark-common.toml", "[general]\n"),
+            ("overrides/config/paxi/datapack_load_order.json", '{"loadOrder":["create-magic-lite-compat"]}'),
+            (prefix + "pack.mcmeta", '{"pack":{"pack_format":15,"description":"Compatibility fixes"}}'),
+            (prefix + "README.txt", "Public recipe compatibility fixes.\n"),
+            (prefix + "data/industrialforegoing/advancements/recipes/misc/simulated_hydroponic_bed.json", "{}"),
+            (prefix + "data/pneumaticcraft/recipes/drone_interface.json", "{}"),
+            (prefix + "data/sgjourney/recipes/naquadah_graver.json", "{}"),
+            (prefix + "data/sgjourney/recipes/netherite_graver.json", "{}"),
+        ])
+        result = self.publish(archive)
+        self.assertEqual(result["version"], "1.5.0")
+        self.assertEqual(Path(result["archive_path"]).read_bytes(), archive.read_bytes())
+
+    def test_paxi_allowlist_does_not_admit_other_packs_files_or_traversal(self):
+        prefix = "overrides/config/paxi/datapacks/create-magic-lite-compat/"
+        names = [
+            "overrides/config/paxi/private.json",
+            "overrides/config/paxi/datapacks/another-pack/pack.mcmeta",
+            prefix + "private.json",
+            prefix + "data/pneumaticcraft/recipes/other_recipe.json",
+            prefix + "data/sgjourney/functions/start.mcfunction",
+            prefix + "data/sgjourney/recipes/../recipes/naquadah_graver.json",
+            prefix + "data/sgjourney/recipes/naquadah_graver.json.bak",
+            prefix + "README.TXT",
+            "overrides/config/quark-common.toml.bak",
+        ]
+        for name in names:
+            with self.subTest(name=name):
+                self.assert_rejected(self.archive(extra_entries=[(name, "{}")]))
+
     def test_existing_suggestions_and_votes_survive_with_pre_migration_backup(self):
         self.private.mkdir()
         database_path = self.private / "panel.sqlite3"
